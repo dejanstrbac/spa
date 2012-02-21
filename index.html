@@ -1,0 +1,328 @@
+<!--//
+
+      _/\_       __/\__
+      ) . (_    _) .' (
+      `) '.(   ) .'  (`
+       `-._\(_ )/__(~`
+           (   )-.__
+           ) o            
+          /               Moosehead SPA (Single Page Application)
+         ( ,// )          Copyright 2012 
+          `''\/-.         Dejan Strbac (me@dejanstrbac.com)
+                 \      
+
+// -->
+
+<html>
+  <head>
+    <link href="reset.css" media="screen" rel="stylesheet" type="text/css">    
+    <link href="grid.css" media="screen" rel="stylesheet" type="text/css"> 
+    <link href="styles.css" media="screen" rel="stylesheet" type="text/css">   
+
+
+    <script src="jquery.min.js"></script>
+    <script src="underscore.min.js"></script>
+    <script src="jquery.mustache.js"></script>
+    
+    <script src="jquery.spa.js"></script>
+
+
+    <script type='text/javascript'>
+      // The data for the views      
+      var spaPayload = {
+        collections: [
+          { id: 10, title: 'Test Collection 1', image: 'http://g-ec2.images-amazon.com/images/I/31Ugjh3wI9L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 11, title: 'Test Collection 2', image: 'http://g-ec2.images-amazon.com/images/I/31vBWjc7qRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 12, title: 'Test Collection 3', image: 'http://g-ec2.images-amazon.com/images/I/41pUBgu9CRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 13, title: 'Test Collection 4', image: 'http://g-ec2.images-amazon.com/images/I/41HxloUQB7L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 14, title: 'Test Collection 5', image: 'http://g-ec2.images-amazon.com/images/I/41HxloUQB7L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 15, title: 'Test Collection 6', image: 'http://g-ec2.images-amazon.com/images/I/41pUBgu9CRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 16, title: 'Test Collection 7', image: 'http://g-ec2.images-amazon.com/images/I/31Ugjh3wI9L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 17, title: 'Test Collection 8', image: 'http://g-ec2.images-amazon.com/images/I/51bGssGrcSL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 18, title: 'Test Collection 9', image: 'http://g-ec2.images-amazon.com/images/I/41l+K+DYIbL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 19, title: 'Test Collection 10', image: 'http://g-ec2.images-amazon.com/images/I/41eDQ4BoZ8L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 20, title: 'Test Collection 11', image: 'http://g-ec2.images-amazon.com/images/I/318SpVKFcRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 21, title: 'Test Collection 12', image: 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 22, title: 'Test Collection 13', image: 'http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' }
+        ],
+        
+        products: [
+          { id: 1, collection_id: 12, title: 'Test Product 1', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/41XpaudB1SL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 2, collection_id: 12, title: 'Test Product 2', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 3, collection_id: 12, title: 'Test Product 3', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 4, collection_id: 12, title: 'Test Product 4', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 5, collection_id: 12, title: 'Test Product 5', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 6, collection_id: 12, title: 'Test Product 6', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 7, collection_id: 12, title: 'Test Product 7', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 8, collection_id: 12, title: 'Test Product 8', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 9, collection_id: 12, title: 'Test Product 9', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
+          { id: 10, collection_id: 13, title: 'Test Product 10', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']}
+        ]
+      };
+    </script>
+  </head>
+
+
+  <body>
+    <div id="channel-switcher" class="container_12">      
+        <div class="grid_8">
+          <a href="index_men.html">Men</a>
+          <a href="index_men.html">Women</a>
+          <a href="index_men.html">Home</a>
+          <a href="index_men.html">City</a>
+        </div>
+        <div class="grid_4">
+          <div id="account-menu">
+            My Account | Help | Sign Out
+          </div>
+        </div>
+        <div class="clear"></div>        
+    </div>
+        
+
+    <!-- Static Page Header -->
+    <div id="header">
+      <div id="logo">
+        <a href="/c/men">Moosehead</a>
+      </div>
+    </div>
+    
+
+    <div id="main">
+      <!-- TODO: this should be conditional, if there are notifications -->
+      <div id="notifications">
+        <div class="container_12">
+          <div class="grid_12">
+            Hey, invite friends!
+          </div>
+          <div class="clear"></div>
+        </div>        
+      </div>
+
+      <div id="app_container" class="container_12">
+        <div class="grid_12">
+          <h1> You need to have javascript enabled to run this application </h1>
+        </div>
+        <div class="clear"></div>
+      </div>
+    </div>
+
+    <!-- Static Page Footer TODO: should be extracted into own file -->  
+    <div id="footer"> 
+      <div class="container_12">
+        
+        <div class="grid_4">
+          Moosehead ecommerce
+        </div>
+
+        <div class="grid_2">
+          <ul>
+            <li class="title">Customer Service</li>
+            <li>Feedback</li>
+            <li>Return Policy</li>
+            <li>Shipping &amp; Tax</li>
+            <li>International</li>
+          </ul>
+        </div>
+
+        <div class="grid_2">
+          <ul>
+            <li class="title">About</li>
+            <li>Careers</li>
+            <li>FAQ</li>
+          </ul>
+        </div>
+
+        <div class="grid_2">
+          <ul>
+            <li class="title">Policies</li>
+            <li>Terms of Service</li>
+            <li>Privacy</li>
+            <li>Security</li>
+            <li>Website Terms of Use</li>
+          </ul>
+        </div>
+        
+        <div class="grid_2">
+          <ul>
+            <li class="title">Connect with Us</li>
+            <li>Mobile</li>            
+            <li>Facebook</li>
+            <li>Twitter</li>            
+          </ul>
+        </div>
+        <div class="clear"></div>
+      </div>
+    </div>
+
+
+    <!-- SPA TEMPLATES START HERE -->
+
+
+    <div id="spa__home" class="spa__template" style="display:none">
+        {{#collections}}
+        <div class="grid_4 collection-block">
+          <div class="image">
+            <a href="#!collection={{id}}"><img src="{{image}}"/></a>
+          </div>
+          <div class="caption"> 
+            <a href="#">{{title}}</a>       
+            <div class="ends">Event Ends WED at 9 AM PT</div>
+          </div>
+        </div>        
+        {{/collections}}
+        <div class="clear"></div>      
+    </div>
+
+
+    <div id="spa__collection" class="spa__template" style="display:none">
+      <div class="grid_4">        
+        <img src="{{collection.image}}"/>
+      </div>
+      <div class="grid_8">
+        <h1>{{collection.title}}</h1>
+        <p>{{collection.description}}</p>
+      </div>
+      <div class="clear"></div>
+
+      {{#products}}
+      <div class="grid_4 product-block">
+        <div class="image">
+          <a href="#!product={{id}}"><img src="{{image}}"/></a>
+        </div>
+        <div class="caption"> 
+          <a href="#">{{title}}</a>       
+          <div class="ends">Event Ends WED at 9 AM PT</div>
+        </div>
+      </div>        
+      {{/products}}
+
+      <div class="clear"></div>
+    </div>
+
+
+    <div id="spa__product" class="spa__template" style="display:none">
+      <div class="grid_3">
+      <a href="#!collection={{collection.id}}">{{collection.title}}</a>
+        <br/>
+        <br/>
+      <h1>{{product.title}}</h1>
+      <p>description</p>
+      </div>
+      <div class="grid_6">
+        {{#product.images}} 
+          <img src="{{.}}"/>
+        {{/product.images}}
+      </div>
+      <div class="grid_3">
+        <button>Buy</button>
+      </div>
+      <div class="clear"></div>
+    </div>
+
+
+    <div type="text/html" charset="utf-8" id="spa__city" class="spa__template" style="display:none">
+      <h1>This is a channel View for city</h1>
+    </div>
+
+
+    <div id="spa__404" class="spa__template" style="display:none">
+      <h1>Page not found!</h1>
+    </div>
+
+
+
+    <!-- END SPA TEMPLATES -->
+
+    <script type="text/javascript" charset="utf-8">
+      
+      // var moosehead = Spa();  // leave in global namespace
+      var moosehead = $('#app_container').spa(payload);
+
+      $(function() {
+        // --------------------------------------------------------------
+        moosehead.addControllers({
+
+          product: {
+            handler: function (params) {
+              var selectedProduct = _.find(spaPayload.products, function(el) { return el.id == params['product']});
+              if (selectedProduct) {
+                productCollection = _.find(spaPayload.collections, function(el) { return el.id == selectedProduct.collection_id });
+                return { product: selectedProduct, collection: productCollection }; 
+              }
+            },
+            template: 'product'
+          },
+
+
+          collection: {
+            handler: function (params) {
+              var selectedCollection = _.find(spaPayload.collections, function(el) { return el.id == params['collection']}),
+                  collectionProducts;
+                if (selectedCollection) {
+                  collectionProducts = _.filter(spaPayload.products, function(el) { return el.collection_id == params['collection']});
+                  collectionProducts = _.map(collectionProducts, function(el) { el.image = el.images[0]; return el; });
+                  return { collection: selectedCollection, products: collectionProducts}
+                } // else 404            
+            },
+            template: 'collection'
+          },
+
+        
+          home: {
+            template: 'home',
+            handler: function (params) {
+              //
+              // List all collections that are on sale
+              //
+              var collectionsOnSale = _.filter(spaPayload.collections, function(c) { return c.sale; });
+              return { collections: collectionsOnSale };
+            }
+          }
+        });
+
+
+        moosehead.addRoutes([        
+          // todo: maybe have one parameter to assume this both with same name
+          { url: 'product=',    controller: 'product'    }, // highest priority
+          { url: 'collection=', controller: 'collection' },
+          { url: null,          controller: 'home'        }  // last route is always root - lowest priority
+        ]);
+
+        moosehead.run();
+
+
+
+        // ---------------------------------------------------------------
+        // NON SPA RELATED STUFF BELOW
+        //
+        
+        // visual helper functions TODO: move away
+
+
+        // Header Scrolling
+        var headerDefaultTop = parseInt($('#header').css('top'));
+        $(window).scroll(function(){
+          var x = $(this).scrollTop();
+          if (x >= headerDefaultTop) {
+            x = 0;
+          } else if (x <= 0) {
+            x = headerDefaultTop;
+          } else {
+            x = headerDefaultTop - x;
+          } 
+          $('#header').css('top', x + 'px');
+        });  
+        
+        // notifications bar to grab attention, show for 10 seconds
+        setTimeout(function() {
+          $('#notifications').slideDown();
+          setTimeout(function() {
+            $('#notifications').slideUp();
+          }, 10000);
+        }, 1000);
+
+      });
+    </script>
+  </body>
+</html>

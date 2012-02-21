@@ -1,0 +1,106 @@
+body {
+  font-family: Tahoma, sans-serif;
+  font-size: 14px;
+}
+
+#channel-switcher {
+  height: 20px;
+  padding: 10px 0;
+}
+
+
+#header {
+  top: 40px;
+  width: 100%;
+  position: fixed;
+  background: black;
+  color: white;
+  padding: 20px 0;  
+  height: 40px;
+  z-index: 1;
+}
+
+
+#account-menu {
+  float: right;
+}
+
+
+
+#channel-menu a {
+  color: black;
+  text-decoration: none;
+  background: white;  
+}
+
+
+#logo a {
+  color: white;
+  font-size: 30px;
+  text-decoration: none;
+}
+
+
+#main {  
+  margin-top: 80px;
+  background-color: #f9f9f9;
+  padding-bottom: 30px;
+}
+
+#notifications {
+  padding: 10px 0;
+  background: white;
+  display: none;
+  border-bottom: 1px solid #ccc;
+}
+
+
+#footer{ 
+  border-top: 1px solid #eee; 
+  padding: 20px 0;
+  font-size: 12px;
+}
+
+#footer .title {
+  font-weight:bold;
+  font-size: 1.1em;
+  padding: 10px 0;
+}
+
+
+.collection-block {
+  margin-top: 30px;  
+}
+
+.collection-block img { width: 300px; }
+.collection-block .caption a { 
+  display: block; 
+  text-transform: 
+  uppercase; 
+  text-decoration:none; 
+  padding: 5px 0; 
+  color: #6B1C12;
+}
+.collection-block .ends {   
+  color: #888;
+  font-size: 0.9em; 
+}
+
+
+.product-block {
+  margin-top: 30px;  
+}
+
+.product-block img { width: 300px; }
+.product-block .caption a { 
+  display: block; 
+  text-transform: 
+  uppercase; 
+  text-decoration:none; 
+  padding: 5px 0; 
+  color: #6B1C12;
+}
+.product-block .ends {   
+  color: #888;
+  font-size: 0.9em; 
+}
