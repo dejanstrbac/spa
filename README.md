@@ -31,8 +31,8 @@ redirecting to the server for purchase completion.
 Note that this is very early stage project, and lacks tests.
 
 
-Dependencies: 
--------------
+Dependencies 
+------------
 
   * [jQuery](http://jquery.com/) 
   * [underscore.js](http://documentcloud.github.com/underscore/)
@@ -41,7 +41,8 @@ Dependencies:
 Even though underscore.js includes own template engine, mustache is logic less which fits my taste better now.
 
 
-Usage:
+Usage
+-----
 
   1) Include needed libraries
 
@@ -110,8 +111,8 @@ Usage:
 
 
 
-TODO:
-
+TODO
+-----
   * possibility to select or inject own template engine
   * tests
   * multi-action controllers
