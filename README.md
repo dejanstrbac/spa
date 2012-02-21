@@ -20,9 +20,9 @@
 =============================================
 
 Requires: 
-  * [jQuery](http://jquery.com/) 
-  * [Underscore.js](http://documentcloud.github.com/underscore/)
-  * [Mustache.js](https://github.com/janl/mustache.js) 
+  - [jQuery](http://jquery.com/) 
+  - [Underscore.js](http://documentcloud.github.com/underscore/)
+  - [Mustache.js](https://github.com/janl/mustache.js) 
   
 
 Usage:
