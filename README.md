@@ -19,27 +19,38 @@
 [SPA] - Single Page Apps with jQuery
 ====================================
 
-This is a jQuery add-on  for read heavy javascript apps e.g. ecommerce apps.
-The server will render the page which includes all the catalog data in JSON variable. 
-For the concerned ones, JSON is text data, easy to handle with gzip compression headers.
-Browsing around the site can now completely be offloaded to the user, and request to the servers can be
-made only for the parts that require server intervention.
+SPA is a lightweight jQuery plugin that allows for DVC (Data-View-Controller) that are read/browse heavy.
+Most common use case is in ecommerce where the catalog data does not require often reloads. 
+SPA has been inspired by Amazon's MyHabit flash sales website.
 
-In an ecommerce app, that would be - contacting the server via ajax on shopping cart update, and 
-redirecting to the server for purchase completion.
+How does it work?
+-----------------
 
-Note that this is very early stage project, and lacks tests.
+Your server renders a page which includes all the catalog data in JSON, assigned to a javascript variable.
+SPA is loaded and its controllers access this JSON payload, process it and render the templates.
+
+Routing is based on hash bang pattern "www.example.com/#!product=23&category=45". Root is simply a '#'.
+
+For the ones concerned about the size of the payload, JSON is text data, easy to handle with gzip compression headers.
+
+Browsing around the site can  completely be offloaded to the user, and request to the servers can be
+made only for the parts that require server intervention. In an ecommerce app, that would be loging in or 
+shopping cart modifications, and redirecting to the server for purchase completion.
+
+Note that this is very early stage project, and lacks tests. Contributions are welcome!
 
 
 Dependencies 
 ------------
 
   * [jQuery](http://jquery.com) 
-  * [mustache.js](https://github.com/janl/mustache.js) 
 
-Using mustache.js is only a matter of taste here. I prefer logic-less templates.
-[underscore.js](http://documentcloud.github.com/underscore/) fits naturally here as you will be parsing potentially huge amounts of JSON data, 
-so functional helpers might be of good use. The supplied example uses underscore.
+Examples use [mustache.js](https://github.com/janl/mustache.js) but that is only a matter of taste. I prefer logic-less templates. 
+You can use any engine you wish by defining your renderer.
+
+[underscore.js](http://documentcloud.github.com/underscore/) fits naturally here as you will probably be parsing potentially huge amounts of JSON data.
+Functional helpers might be of good use. Underscore also has own templating engine so you might prefer that one instead of mustache. 
+The supplied example uses underscore for filtering the JSON data.
 
 
 Usage
@@ -47,9 +58,11 @@ Usage
 
   1) Include needed libraries
 
-      <script src="jquery.min.js"></script>
-      <script src="jquery.mustache.js"></script>
-      <script src="jquery.spa.js"></script>
+      <script src="jquery.min.js" type="text/javascript"></script>
+      <script src="jquery.spa.js" type="text/javascript"></script>
+
+      <!-- mustache.js is not required -->
+      <script src="jquery.mustache.js" type="text/javascript"></script>
 
 
   2) Define templates including 404
@@ -80,6 +93,7 @@ Usage
   5) Define your template rendering engine - in this case Mustache.js
 
         mySpa.setRenderer( function(template, data) {
+          // define here how to render the templates
           return Mustache.render(template, data)
         });
 
