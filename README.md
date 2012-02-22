@@ -82,7 +82,7 @@ Usage
 
   3) Initialize data
 
-        var jsonPayload = {}; // your own JSON data, best outside of jQuery ready listener
+        var jsonPayload = {...}; // your own JSON data
         
 
   4) Define the container for the dynamic content
@@ -92,9 +92,8 @@ Usage
 
   5) Define your template rendering engine - in this case Mustache.js
 
-        mySpa.setRenderer( function(template, data) {
-          // define here how to render the templates
-          return Mustache.render(template, data)
+        mySpa.setRenderer( function(template, data) {          
+          return Mustache.render(template, data) // render the templates as you wish here
         });
 
 
