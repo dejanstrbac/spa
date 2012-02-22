@@ -19,13 +19,14 @@
 (function( $ ) {
   $.fn.spa = $.fn.spa || function() {
   
-    var containerElementName,
-        containerElement,         //memoize the container as we will access it very often
-        controllers,
-        routes,
-        paramsState,              // in case we update some value in url, here the remaining context stays
-        legacyHash,
-        memoizedTemplates,
+    var containerElement,         // - memoize the container element as it is accessed often
+        paramsState,              // - in case we update some value in url, keeping here the remaining context
+        legacyHash,               //
+        memoizedTemplates,        //
+
+        controllers = {},         // - developer defined controllers       
+        routes      = [],         //   and routes are attached here
+
 
         isHashChangeSupported = function() {
           // Modernizr check documentMode logic from YUI to filter out 
@@ -33,38 +34,35 @@
           return ('onhashchange' in window) && (document.documentMode === undefined || document.documentMode > 7);
         },
 
-        renderTemplate = function(name, data, partials) { // partials are [optional]
+
+        templateRenderer = function() {
+          throw new Error('(SPA) no template renderer defined');
+        },
+
+
+        renderTemplate = function(name, data) {
           var template = memoizedTemplates[name];
           if (template) {
-            containerElement.html( $.mustache( memoizedTemplates[name], data, partials) );
+            containerElement.html( templateRenderer( memoizedTemplates[name], data) );
           } else {
-            throw new Error( 'Template is not defined "' + name + '"' );
+            throw new Error('(SPA) template does not exist:' + name);
           }
         },
 
 
         getParams = function() {
-            var qs = location.hash,
+            var qs     = location.hash,
                 params = {},
                 tokens = null,
-                re = /[?&]?([^=]+)=([^&]*)/g;
+                re     = /[?&]?([^=]+)=([^&]*)/g;
 
             if (qs.match(/^\#\!/)) {
               qs = qs.substr(2).split("+").join(" ");
               while (tokens = re.exec(qs)) {
                   params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
-              }
-              return params;
+              }              
             }
-        },
-
-
-        urlFor = function (resources) {
-          var completeUrl = '';
-          for (var i = 0; i < resources.length; i++) {
-            completeUrl += resources[i]['resource'] + '=' + resources[i]['id'];
-          }
-          return '#!' + completeUrl;
+            return params;
         },
 
 
@@ -99,13 +97,10 @@
             }
 
             routedController = controllers[routedControllerName];
-            paramsState = getParams() || {};
-            //
-            // TODO: if there is no template, but only callback defined, does it make sense?
-            //
-            templateData = routedController.handler( paramsState );        //pass parameters to the controller
+            paramsState = getParams();
+            templateData = routedController.handler( paramsState );
             if (templateData) {
-              renderTemplate( 'spa__' + routedController.template, templateData, routedController.partials);
+              renderTemplate( 'spa__' + routedController.template, templateData);
             } else {
               renderTemplate('spa__404');
             }
@@ -115,29 +110,25 @@
 
     containerElement = this;
     if (!containerElement.length) {
-      throw new Error('(SPA) layout container does not exist');
+      throw new Error('(SPA) container does not exist');
     }
     
-    // Memoize all templates so we don't have to access them on each render
     memoizedTemplates = {};
-    $('.spa__template').map( function(i, el){ 
+    $('.spa__template').map( function(i, el) { 
       var template = $(el);
       memoizedTemplates[ template.attr('id') ] = template.html();
     });
 
 
-    //
-    // Public interfaces are returned
-    //
     return {
       run: function() {
-        if (isHashChangeSupported()) { // Modernizer inspired
+        if (isHashChangeSupported()) {
           $(window).bind('hashchange', router);
-        } else {
-          // IE 6, IE 7 and other hairdryers support
-          setInterval(router, 333);
+        } else {          
+          setInterval(router, 333); // IE 6, IE 7 and other hairdryers support
         }      
-        router(); // on page load, pass through router to check if there is an initial request
+        router(); // on page load, pass through router to check if there 
+                  // is an initial request - copy/pasted link
       },
 
       currentState: function() {
@@ -145,15 +136,18 @@
       },
 
       addControllers: function(newControllers) {
-        controllers = {};
-        $.extend(controllers, newControllers); // TODO: can we not use underscore.js
+        $.extend(controllers, newControllers);
       },
 
-      addRoutes: function(newRoutes) {
-        routes = [];
-        $.merge(routes, newRoutes); // TODO: can we not use underscore.js
+      addRoutes: function(newRoutes) {        
+        $.merge(routes, newRoutes);
+      },
+
+      setRenderer: function(newRenderer) {
+        templateRenderer = newRenderer;
       }
-    }
+
+    };
 
   };
 })( jQuery );

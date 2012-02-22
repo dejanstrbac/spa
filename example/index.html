@@ -1,46 +1,20 @@
+<!DOCTYPE html>
 <html>
   <head>
-    <link href="css/reset.css" media="screen" rel="stylesheet" type="text/css">    
-    <link href="css/grid.css" media="screen" rel="stylesheet" type="text/css"> 
-    <link href="css/styles.css" media="screen" rel="stylesheet" type="text/css">   
-
-
     <script src="js/jquery.min.js"></script>
     <script src="js/underscore.min.js"></script>
     <script src="js/jquery.mustache.js"></script>
     <script src="../jquery.spa.js"></script>
 
 
-    <script type='text/javascript'>
-      // The data for the views      
+    <script type='text/javascript'>      
       var spaPayload = {
-        collections: [
-          { id: 10, title: 'Test Collection 1', image: 'http://g-ec2.images-amazon.com/images/I/31Ugjh3wI9L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 11, title: 'Test Collection 2', image: 'http://g-ec2.images-amazon.com/images/I/31vBWjc7qRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 12, title: 'Test Collection 3', image: 'http://g-ec2.images-amazon.com/images/I/41pUBgu9CRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 13, title: 'Test Collection 4', image: 'http://g-ec2.images-amazon.com/images/I/41HxloUQB7L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 14, title: 'Test Collection 5', image: 'http://g-ec2.images-amazon.com/images/I/41HxloUQB7L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 15, title: 'Test Collection 6', image: 'http://g-ec2.images-amazon.com/images/I/41pUBgu9CRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 16, title: 'Test Collection 7', image: 'http://g-ec2.images-amazon.com/images/I/31Ugjh3wI9L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 17, title: 'Test Collection 8', image: 'http://g-ec2.images-amazon.com/images/I/51bGssGrcSL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 18, title: 'Test Collection 9', image: 'http://g-ec2.images-amazon.com/images/I/41l+K+DYIbL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 19, title: 'Test Collection 10', image: 'http://g-ec2.images-amazon.com/images/I/41eDQ4BoZ8L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 20, title: 'Test Collection 11', image: 'http://g-ec2.images-amazon.com/images/I/318SpVKFcRL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 21, title: 'Test Collection 12', image: 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
-          { id: 22, title: 'Test Collection 13', image: 'http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', sale: true, description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' }
-        ],
-        
         products: [
-          { id: 1, collection_id: 12, title: 'Test Product 1', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/41XpaudB1SL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 2, collection_id: 12, title: 'Test Product 2', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 3, collection_id: 12, title: 'Test Product 3', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 4, collection_id: 12, title: 'Test Product 4', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 5, collection_id: 12, title: 'Test Product 5', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 6, collection_id: 12, title: 'Test Product 6', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 7, collection_id: 12, title: 'Test Product 7', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 8, collection_id: 12, title: 'Test Product 8', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 9, collection_id: 12, title: 'Test Product 9', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']},
-          { id: 10, collection_id: 13, title: 'Test Product 10', sale: true, images: ['http://g-ec2.images-amazon.com/images/I/31zD3ZEEKsL._SX312_SY219_.jpg', 'http://g-ec2.images-amazon.com/images/I/31NvQpjtt1L._SX312_SY219_.jpg']}
+          { id: 93123, title: 'Red Product',   sale: true,  description: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' },
+          { id: 10123, title: 'Blue Product',  sale: true,  description: 'Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.' },
+          { id: 10124, title: 'Pink Product',  sale: true,  description: 'Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.' },
+          { id: 10125, title: 'Green Product', sale: true,  description: 'Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.' },
+          { id: 12123, title: 'White Product', sale: false, description: 'Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi.' }
         ]
       };
     </script>
@@ -48,265 +22,102 @@
 
 
   <body>
-    <div id="channel-switcher" class="container_12">      
-        <div class="grid_8">
-          <a href="index_men.html">Men</a>
-          <a href="index_men.html">Women</a>
-          <a href="index_men.html">Home</a>
-          <a href="index_men.html">City</a>
-        </div>
-        <div class="grid_4">
-          <div id="account-menu">
-            My Account | Help | Sign Out
-          </div>
-        </div>
-        <div class="clear"></div>        
-    </div>
-        
+    <pre>
+              mm###########mmm
+           m####################m
+         m#####`"#m m###"""'######m
+        ######*"  "   "   "mm#######
+      m####"  ,             m"#######m       SPA (Single Page App) / jQuery plugin
+     m#### m*" ,'  ;     ,   "########m      
+     ####### m*   m  |#m  ;  m ########      https://github.com/dejanstrbac/spa
+    |######### mm#  |####  #m##########|
+     ###########|  |######m############
+     "##########|  |##################"
+      "#########  |## /##############"
+        ########|  # |/ m###########
+         "#######      ###########"
+           """"""       """""""""
+    </pre>    
 
-    <!-- Static Page Header -->
-    <div id="header">
-      <div id="logo">
-        <a href="/c/men">Logo</a>
-      </div>
-    </div>
-    
-
-    <div id="main">
-      <!-- TODO: this should be conditional, if there are notifications -->
-      <div id="notifications">
-        <div class="container_12">
-          <div class="grid_12">
-            Hey, invite friends!
-          </div>
-          <div class="clear"></div>
-        </div>        
-      </div>
-
-      <div id="app_container" class="container_12">
-        <div class="grid_12">
-          <h1> You need to have javascript enabled to run this application </h1>
-        </div>
-        <div class="clear"></div>
-      </div>
-    </div>
-
-    <!-- Static Page Footer TODO: should be extracted into own file -->  
-    <div id="footer"> 
-      <div class="container_12">
-        
-        <div class="grid_4">
-          Moosehead ecommerce
-        </div>
-
-        <div class="grid_2">
-          <ul>
-            <li class="title">Customer Service</li>
-            <li>Feedback</li>
-            <li>Return Policy</li>
-            <li>Shipping &amp; Tax</li>
-            <li>International</li>
-          </ul>
-        </div>
-
-        <div class="grid_2">
-          <ul>
-            <li class="title">About</li>
-            <li>Careers</li>
-            <li>FAQ</li>
-          </ul>
-        </div>
-
-        <div class="grid_2">
-          <ul>
-            <li class="title">Policies</li>
-            <li>Terms of Service</li>
-            <li>Privacy</li>
-            <li>Security</li>
-            <li>Website Terms of Use</li>
-          </ul>
-        </div>
-        
-        <div class="grid_2">
-          <ul>
-            <li class="title">Connect with Us</li>
-            <li>Mobile</li>            
-            <li>Facebook</li>
-            <li>Twitter</li>            
-          </ul>
-        </div>
-        <div class="clear"></div>
-      </div>
+    <div id="app_container">
+        <h1>You need to have javascript enabled to enjoy this website.</h1>
     </div>
 
 
-    <!-- SPA TEMPLATES START HERE -->
-
+    <!--// SPA TEMPLATES //-->
 
     <div id="spa__home" class="spa__template" style="display:none">
-        {{#collections}}
-        <div class="grid_4 collection-block">
-          <div class="image">
-            <a href="#!collection={{id}}"><img src="{{image}}"/></a>
-          </div>
-          <div class="caption"> 
-            <a href="#">{{title}}</a>       
-            <div class="ends">Event Ends WED at 9 AM PT</div>
-          </div>
-        </div>        
-        {{/collections}}
-        <div class="clear"></div>      
+        <ul>
+        {{#products}}
+          <li>
+            <a href="#!product={{id}}">{{title}}</a>
+          </li>
+        {{/products}}
+        </ul>
     </div>
 
 
-    <div id="spa__collection" class="spa__template" style="display:none">
-      <div class="grid_4">        
-        <img src="{{collection.image}}"/>
-      </div>
-      <div class="grid_8">
-        <h1>{{collection.title}}</h1>
-        <p>{{collection.description}}</p>
-      </div>
-      <div class="clear"></div>
-
-      {{#products}}
-      <div class="grid_4 product-block">
-        <div class="image">
-          <a href="#!product={{id}}"><img src="{{image}}"/></a>
-        </div>
-        <div class="caption"> 
-          <a href="#">{{title}}</a>       
-          <div class="ends">Event Ends WED at 9 AM PT</div>
-        </div>
-      </div>        
-      {{/products}}
-
-      <div class="clear"></div>
-    </div>
-
-
-    <div id="spa__product" class="spa__template" style="display:none">
-      <div class="grid_3">
-      <a href="#!collection={{collection.id}}">{{collection.title}}</a>
-        <br/>
-        <br/>
+    <div id="spa__product" class="spa__template" style="display:none">      
       <h1>{{product.title}}</h1>
-      <p>description</p>
-      </div>
-      <div class="grid_6">
-        {{#product.images}} 
-          <img src="{{.}}"/>
-        {{/product.images}}
-      </div>
-      <div class="grid_3">
-        <button>Buy</button>
-      </div>
-      <div class="clear"></div>
+      <p>{{product.description}}</p>
+      <a href="#">&laquo;&laquo; Back</a>
     </div>
 
 
-    <div type="text/html" charset="utf-8" id="spa__city" class="spa__template" style="display:none">
-      <h1>This is a channel View for city</h1>
-    </div>
-
-
+    <!-- You need to define your own 404 template -->
     <div id="spa__404" class="spa__template" style="display:none">
       <h1>Page not found!</h1>
     </div>
 
 
+    <!--// END SPA TEMPLATES //-->
 
-    <!-- END SPA TEMPLATES -->
-
-    <script type="text/javascript" charset="utf-8">
+    <script type="text/javascript" charset="utf-8">      
       
-      
-      var mySpa = $('#app_container').spa(); // leave in global namespace
+      var mySpa = $('#app_container').spa();
 
       $(function() {
-        // --------------------------------------------------------------
+
+        mySpa.setRenderer( function(template, data) {
+          return Mustache.render(template, data)
+        });
+
         mySpa.addControllers({
 
           product: {
             handler: function (params) {
               var selectedProduct = _.find(spaPayload.products, function(el) { return el.id == params['product']});
               if (selectedProduct) {
-                productCollection = _.find(spaPayload.collections, function(el) { return el.id == selectedProduct.collection_id });
-                return { product: selectedProduct, collection: productCollection }; 
+                return { 
+                  product: selectedProduct 
+                }; 
               }
             },
             template: 'product'
-          },
+          },               
 
-
-          collection: {
-            handler: function (params) {
-              var selectedCollection = _.find(spaPayload.collections, function(el) { return el.id == params['collection']}),
-                  collectionProducts;
-                if (selectedCollection) {
-                  collectionProducts = _.filter(spaPayload.products, function(el) { return el.collection_id == params['collection']});
-                  collectionProducts = _.map(collectionProducts, function(el) { el.image = el.images[0]; return el; });
-                  return { collection: selectedCollection, products: collectionProducts}
-                } // else 404            
-            },
-            template: 'collection'
-          },
-
-        
           home: {
             template: 'home',
             handler: function (params) {
-              //
-              // List all collections that are on sale
-              //
-              var collectionsOnSale = _.filter(spaPayload.collections, function(c) { return c.sale; });
-              return { collections: collectionsOnSale };
+              var productsOnSale = _.filter(spaPayload.products, function(p) { return p.sale; });
+              return { 
+                products: productsOnSale 
+              };
             }
           }
         });
 
 
         mySpa.addRoutes([        
-          // todo: maybe have one parameter to assume this both with same name
-          { url: 'product=',    controller: 'product'    }, // highest priority
-          { url: 'collection=', controller: 'collection' },
-          { url: null,          controller: 'home'        }  // last route is always root - lowest priority
+          { url: 'product=', controller: 'product' },
+          { url: null,       controller: 'home'    }
         ]);
+
 
         mySpa.run();
 
-
-
-        // ---------------------------------------------------------------
-        // NON SPA RELATED STUFF BELOW
-        //
-        
-        // visual helper functions TODO: move away
-
-
-        // Header Scrolling
-        var headerDefaultTop = parseInt($('#header').css('top'));
-        $(window).scroll(function(){
-          var x = $(this).scrollTop();
-          if (x >= headerDefaultTop) {
-            x = 0;
-          } else if (x <= 0) {
-            x = headerDefaultTop;
-          } else {
-            x = headerDefaultTop - x;
-          } 
-          $('#header').css('top', x + 'px');
-        });  
-        
-        // notifications bar to grab attention, show for 10 seconds
-        setTimeout(function() {
-          $('#notifications').slideDown();
-          setTimeout(function() {
-            $('#notifications').slideUp();
-          }, 10000);
-        }, 1000);
-
       });
+
     </script>
   </body>
 </html>

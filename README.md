@@ -16,8 +16,8 @@
            """"""       """""""""
 
 
-[SPA] - Single Page Apps Framework for jQuery
-=============================================
+[SPA] - Single Page Apps with jQuery
+====================================
 
 This is a jQuery add-on  for read heavy javascript apps e.g. ecommerce apps.
 The server will render the page which includes all the catalog data in JSON variable. 
@@ -34,11 +34,12 @@ Note that this is very early stage project, and lacks tests.
 Dependencies 
 ------------
 
-  * [jQuery](http://jquery.com/) 
-  * [underscore.js](http://documentcloud.github.com/underscore/)
+  * [jQuery](http://jquery.com) 
   * [mustache.js](https://github.com/janl/mustache.js) 
 
-Even though underscore.js includes own template engine, mustache is logic less which fits my taste better now.
+Using mustache.js is only a matter of taste here. I prefer logic-less templates.
+[underscore.js](http://documentcloud.github.com/underscore/) fits naturally here as you will be parsing potentially huge amounts of JSON data, 
+so functional helpers might be of good use. The supplied example uses underscore.
 
 
 Usage
@@ -47,13 +48,11 @@ Usage
   1) Include needed libraries
 
       <script src="jquery.min.js"></script>
-      <script src="underscore.min.js"></script>
       <script src="jquery.mustache.js"></script>
       <script src="jquery.spa.js"></script>
 
 
-  2) Define templates
-
+  2) Define templates including 404
 
       <div id="spa__home" class="spa__template" style="display:none">
         <h1>{{product.title}}</h1>
@@ -68,53 +67,67 @@ Usage
       </div>
 
 
-
-  3) Initialize data, controllers and routes. Then run();
+  3) Initialize data
 
         var jsonPayload = {}; // your own JSON data, best outside of jQuery ready listener
+        
 
-        $(function() {
+  4) Define the container for the dynamic content
           
-          var mySpa = $('#app_container').spa();    // move outside if you need the variable globally accessible
+        var mySpa = $('#app_container').spa();
+
+
+  5) Define your template rendering engine - in this case Mustache.js
+
+        mySpa.setRenderer( function(template, data) {
+          return Mustache.render(template, data)
+        });
+
+
+  6) Add your single action controllers
 
           mySpa.addControllers({
-                    product: {
-                      handler: function (params) {
-                          // do something here with the params array passed 
-                          // and return data you want for the template
-                          return {
-                            // data to be passed to the template
-                          }; 
-                        }
-                      },
-                      template: 'product' // template to render
-                    },
-                    home: {
-                      handler: function (params) {
-                          // fetch home page data...
-                          return {  // return data for the home page template
-                          }; 
-                        }
-                      },
-                      template: 'product' // template to render
-                    }
+            product: {
+              handler: function (params) {
+                  // do something here with the params array passed 
+                  // and return data you want for the template to show, or return null to show 404.
+                  return {
+                    // data to be passed to the template
+                  }; 
+                }
+              },
+              template: 'product'
+            },
+            home: {
+              handler: function (params) {
+                  // fetch home page data...
+                  return {  
+                    // return data for the home page template
+                  }; 
+                }
+              },
+              template: 'home'
+            }
           });
 
         });
+
+
+  7) Add your routes
 
         mySpa.addRoutes([        
           { url: 'product=', controller: 'product' }, // highest priority on the top...
           { controller: 'home' }                      // ...last route is always root - lowest priority, url can be excluded
         ]);
 
-        mySpa.run(); // Kalabunga!
 
+  8) Run and pull the cork out!
+
+        mySpa.run();
 
 
 TODO
 -----
-  * possibility to select or inject own template engine
   * tests
-  * multi-action controllers
-  * urlTo is unused, a way to standardize links maybe
+  * multi-action controllers? y/n?
   * can template name be assumed from the controller/action name?
