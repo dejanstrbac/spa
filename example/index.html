@@ -93,17 +93,27 @@
                 }; 
               }
             },
-            template: 'product'
+            template: 'product',
+            beforeRender: function(newData, oldData) {
+                            alert('This is a beforeRender callback you can define in your controler. ' + 
+                                  'Use it to call javascript before the template renders. ' + 
+                                  'It has access to the new as well previous template data.');              
+                          },
+            afterRender: function(newDatam, oldData) {
+                            alert('This is an afterRender callback you can define in your controler. ' + 
+                                  'Use it to setup javascript for the template. ' + 
+                                  'It has access to the new as well previous template data.');
+                         }
           },               
 
           home: {
-            template: 'home',
             handler: function (params) {
               var productsOnSale = _.filter(spaPayload.products, function(p) { return p.sale; });
               return { 
                 products: productsOnSale 
               };
-            }
+            },
+            template: 'home'
           }
         });
 

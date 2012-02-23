@@ -3,7 +3,7 @@
 //            m####################m
 //          m#####`"#m m###"""'######m
 //         ######*"  "   "   "mm#######
-//       m####"  ,             m"#######m       SPA (Single Page App) / javascript
+//       m####"  ,             m"#######m       SPA (Single Page App) / jQuery
 //      m#### m*" ,'  ;     ,   "########m      
 //      ####### m*   m  |#m  ;  m ########      https://github.com/dejanstrbac/spa
 //     |######### mm#  |####  #m##########|
@@ -23,6 +23,7 @@
         paramsState,              // - in case we update some value in url, keeping here the remaining context
         legacyHash,               //
         memoizedTemplates,        //
+        templateData,
 
         controllers = {},         // - developer defined controllers       
         routes      = [],         //   and routes are attached here
@@ -80,7 +81,7 @@
         router = function() {
           var currentHash = window.location.hash,
               routedController,
-              templateData,
+              newTemplateData,
               template;
           
           if(currentHash != legacyHash) { 
@@ -98,9 +99,16 @@
 
             routedController = controllers[routedControllerName];
             paramsState = getParams();
-            templateData = routedController.handler( paramsState );
-            if (templateData) {
-              renderTemplate( 'spa__' + routedController.template, templateData);
+            newTemplateData = routedController.handler( paramsState );
+            if (newTemplateData) {
+              if (routedController.beforeRender) {
+                routedController.beforeRender(newTemplateData, templateData);
+              }
+              renderTemplate( 'spa__' + routedController.template, newTemplateData);
+              if (routedController.afterRender) {
+                routedController.afterRender(newTemplateData, templateData);
+              }
+              templateData = newTemplateData;
             } else {
               renderTemplate('spa__404');
             }
