@@ -109,7 +109,9 @@ Usage
                   }; 
                 }
               },
-              template: 'product'
+              // template: 'product' // assumed - define if using different than the name of the controller
+              // beforeRender
+              // afterRender
             },
             home: {
               handler: function (params) {
@@ -119,7 +121,7 @@ Usage
                   }; 
                 }
               },
-              template: 'home'
+              // template: 'home' // assumed - define if using different than the name of the controller
             }
           });
 

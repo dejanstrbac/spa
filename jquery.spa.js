@@ -41,12 +41,12 @@
         },
 
 
-        renderTemplate = function(name, data) {
+        renderTemplate = function(name, data, partials) {
           var template = memoizedTemplates[name];
           if (template) {
             containerElement.html( templateRenderer( memoizedTemplates[name], data) );
           } else {
-            throw new Error('(SPA) template does not exist:' + name);
+            throw new Error('(SPA) template does not exist >> ' + name);
           }
         },
 
@@ -101,13 +101,17 @@
             paramsState = getParams();
             newTemplateData = routedController.handler( paramsState );
             if (newTemplateData) {
+
               if (routedController.beforeRender) {
                 routedController.beforeRender(newTemplateData, templateData);
               }
+
               renderTemplate( 'spa__' + routedController.template, newTemplateData);
+
               if (routedController.afterRender) {
                 routedController.afterRender(newTemplateData, templateData);
               }
+
               templateData = newTemplateData;
             } else {
               renderTemplate('spa__404');
@@ -144,7 +148,14 @@
       },
 
       addControllers: function(newControllers) {
-        $.extend(controllers, newControllers);
+        for (var c in newControllers) {
+          if (newControllers.hasOwnProperty(c)) {            
+            if (!newControllers[c].template) {
+              newControllers[c].template = c.toString();
+            }
+            controllers[c] = newControllers[c];
+          }
+        }
       },
 
       addRoutes: function(newRoutes) {        
@@ -152,7 +163,9 @@
       },
 
       setRenderer: function(newRenderer) {
-        templateRenderer = newRenderer;
+        if ($.isFunction(newRenderer)) {
+          templateRenderer = newRenderer;
+        }        
       }
 
     };

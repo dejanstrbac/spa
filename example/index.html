@@ -40,20 +40,21 @@
     </pre>    
 
     <div id="app_container">
-        <h1>You need to have javascript enabled to enjoy this website.</h1>
+      <h1>Initializing...</h1>
+      <noscript>You need to have javascript enabled to enjoy this website.</noscript>
     </div>
 
 
     <!--// SPA TEMPLATES //-->
 
     <div id="spa__home" class="spa__template" style="display:none">
-        <ul>
-        {{#products}}
-          <li>
-            <a href="#!product={{id}}">{{title}}</a>
-          </li>
-        {{/products}}
-        </ul>
+      <ul>
+      {{#products}}
+        <li>
+          <a href="#!product={{id}}">{{title}}</a>
+        </li>
+      {{/products}}
+      </ul>
     </div>
 
 
@@ -69,8 +70,8 @@
       <h1>Page not found!</h1>
     </div>
 
-
     <!--// END SPA TEMPLATES //-->
+
 
     <script type="text/javascript" charset="utf-8">      
       
@@ -86,24 +87,19 @@
 
           product: {
             handler: function (params) {
-              var selectedProduct = _.find(spaPayload.products, function(el) { return el.id == params['product']});
-              if (selectedProduct) {
-                return { 
-                  product: selectedProduct 
-                }; 
+              var selectedProduct = _.find(spaPayload.products, function(el) { return el.id == params['product']});              
+              if (selectedProduct) {   
+                return {            
+                  product: selectedProduct
+                };
               }
             },
-            template: 'product',
             beforeRender: function(newData, oldData) {
-                            alert('This is a beforeRender callback you can define in your controler. ' + 
-                                  'Use it to call javascript before the template renders. ' + 
-                                  'It has access to the new as well previous template data.');              
-                          },
-            afterRender: function(newDatam, oldData) {
-                            alert('This is an afterRender callback you can define in your controler. ' + 
-                                  'Use it to setup javascript for the template. ' + 
-                                  'It has access to the new as well previous template data.');
-                         }
+              alert('Hello from the beforeRender callback of product!');
+            },
+            afterRender: function(newData, oldData) {                        
+              alert('Hello from the afterRender callback of product!');
+            }
           },               
 
           home: {
@@ -112,8 +108,7 @@
               return { 
                 products: productsOnSale 
               };
-            },
-            template: 'home'
+            }
           }
         });
 
