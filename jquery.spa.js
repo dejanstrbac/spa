@@ -41,7 +41,7 @@
         },
 
 
-        renderTemplate = function(name, data, partials) {
+        renderTemplate = function(name, data) {
           var template = memoizedTemplates[name];
           if (template) {
             containerElement.html( templateRenderer( memoizedTemplates[name], data) );
