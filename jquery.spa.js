@@ -22,7 +22,7 @@
     var containerElement,         // - memoize the container element as it is accessed often
         paramsState,              // - in case we update some value in url, keeping here the remaining context
         legacyHash,               //
-        memoizedTemplates,        //
+        memoizedTemplates = {},   //
         templateData,
 
         controllers = {},         // - developer defined controllers       
@@ -42,9 +42,14 @@
 
 
         renderTemplate = function(name, data) {
-          var template = memoizedTemplates[name];
+          var template = memoizedTemplates[name],
+              renderedTemplate;
           if (template) {
-            containerElement.html( templateRenderer( memoizedTemplates[name], data) );
+            renderedTemplate = templateRenderer( template, data, memoizedTemplates);            
+            // wrapping with a single element lowers the DOM insertion effort
+            // as we do not know the content being rendered
+            renderedTemplate = '<div id="spa__wrap">' + renderedTemplate + '</div>';
+            containerElement.html( renderedTemplate );
           } else {
             throw new Error('(SPA) template does not exist >> ' + name);
           }
@@ -58,7 +63,7 @@
                 re     = /[?&]?([^=]+)=([^&]*)/g;
 
             if (qs.match(/^\#\!/)) {
-              qs = qs.substr(2).split("+").join(" ");
+              qs = qs.substr(2).split('+').join(' ');
               while (tokens = re.exec(qs)) {
                   params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
               }              
@@ -71,7 +76,7 @@
           var matchedRoute;
           for (var i = 0; (i < routes.length) && !matchedRoute; i++) { // stop as soon as a matching route is found
             if (hUrl.indexOf(routes[i].url) > 0) {
-              matchedRoute = routes[i].controller;
+              matchedRoute = routes[i];
             }
           }
           return matchedRoute;
@@ -80,41 +85,53 @@
 
         router = function() {
           var currentHash = window.location.hash,
+              routeEntry,
               routedController,
+              routedAction,
               newTemplateData,
-              template;
+              templateToRender;
           
           if(currentHash != legacyHash) { 
             legacyHash = currentHash;   // in case we are polling
 
-            if (currentHash.match(/^$|^#(?!\!).+/)) {                 // empty hash or anchor hash
-              routedControllerName = routes.slice(-1)[0].controller;  // root controller is the last one defined
+            if (currentHash.match( /^$|^#(?!\!).+/ )) {     // empty hash or anchor hash
+              routeEntry = routes.slice(-1)[0];             // root controller is the last one defined
             } else if (currentHash.match(/^\#\!.+/)) {
-              routedControllerName = routeTo( currentHash );          // hash present and requesting routing
-              if (!routedControllerName) {                            // router failed to recognize the route
-                renderTemplate('spa__404');
+              routeEntry = routeTo( currentHash );          // hash present and requesting routing
+              if (!routeEntry) {                            // router failed to recognize the route
+                renderTemplate('404');
                 return;
               }
             }
 
-            routedController = controllers[routedControllerName];
-            paramsState = getParams();
-            newTemplateData = routedController.handler( paramsState );
+            routedController = controllers[ routeEntry.controller ];
+            routedAction = routedController[ routeEntry['action'] || 'handler' ];
+                        
+            paramsState = getParams();  // keep the old params available
+            newTemplateData = routedAction( paramsState );
             if (newTemplateData) {
 
               if (routedController.beforeRender) {
-                routedController.beforeRender(newTemplateData, templateData);
+                routedController.beforeRender( newTemplateData.data, templateData );
               }
-
-              renderTemplate( 'spa__' + routedController.template, newTemplateData);
+              
+              // if using actions, the default template is defined by the action
+              
+              templateToRender = routeEntry['controller']; // assume the controller name for the template
+              if (newTemplateData.options && newTemplateData.options['template']) { // has the controller passed a template to render?
+                templateToRender = newTemplateData.options['template'];
+              } else if (routeEntry['action']) {                                    // if action passed, assume action name as template
+                templateToRender += '__' + routeEntry['action'];
+              } 
+              renderTemplate( templateToRender || routedController.template, newTemplateData.data );
 
               if (routedController.afterRender) {
-                routedController.afterRender(newTemplateData, templateData);
+                routedController.afterRender( newTemplateData.data, templateData );
               }
 
-              templateData = newTemplateData;
+              templateData = newTemplateData.data;
             } else {
-              renderTemplate('spa__404');
+              renderTemplate('404');
             }
           } 
         };
@@ -125,10 +142,13 @@
       throw new Error('(SPA) container does not exist');
     }
     
-    memoizedTemplates = {};
-    $('.spa__template').map( function(i, el) { 
-      var template = $(el);
-      memoizedTemplates[ template.attr('id') ] = template.html();
+    $("script[type='text/html']").map( function(i, el) { 
+      var templateEl = $(el),
+          templateName = templateEl.attr('id');
+      if (templateName.substr(0,5) === 'spa__') {
+        templateName = templateName.substring(5);
+      }
+      memoizedTemplates[ templateName ] = templateEl.html();
     });
 
 
@@ -148,14 +168,7 @@
       },
 
       addControllers: function(newControllers) {
-        for (var c in newControllers) {
-          if (newControllers.hasOwnProperty(c)) {            
-            if (!newControllers[c].template) {
-              newControllers[c].template = c.toString();
-            }
-            controllers[c] = newControllers[c];
-          }
-        }
+        $.extend(controllers, newControllers);
       },
 
       addRoutes: function(newRoutes) {        

@@ -47,28 +47,28 @@
 
     <!--// SPA TEMPLATES //-->
 
-    <div id="spa__home" class="spa__template" style="display:none">
+    <script type="text/html" id="spa__home__index">
       <ul>
-      {{#products}}
-        <li>
-          <a href="#!product={{id}}">{{title}}</a>
-        </li>
-      {{/products}}
+        {{#products}}
+          <li>
+            <a href="#!product={{id}}">{{title}}</a>
+          </li>
+        {{/products}}
       </ul>
-    </div>
+    </script>
 
 
-    <div id="spa__product" class="spa__template" style="display:none">      
+    <script type="text/html" id="spa__product">
       <h1>{{product.title}}</h1>
       <p>{{product.description}}</p>
-      <a href="#">&laquo;&laquo; Back</a>
-    </div>
+      <a href="#">&laquo;&laquo; Back</a>      
+    </script>
 
 
     <!-- You need to define your own 404 template -->
-    <div id="spa__404" class="spa__template" style="display:none">
+    <script type="text/html" id="spa__404">
       <h1>Page not found!</h1>
-    </div>
+    </script>
 
     <!--// END SPA TEMPLATES //-->
 
@@ -78,9 +78,8 @@
       var mySpa = $('#app_container').spa();
 
       $(function() {
-
-        mySpa.setRenderer( function(template, data) {
-          return Mustache.render(template, data)
+        mySpa.setRenderer( function(template, data, templates) {
+          return Mustache.render(template, data, templates);
         });
 
         mySpa.addControllers({
@@ -90,23 +89,23 @@
               var selectedProduct = _.find(spaPayload.products, function(el) { return el.id == params['product']});              
               if (selectedProduct) {   
                 return {            
-                  product: selectedProduct
+                  data: { product: selectedProduct }
                 };
               }
             },
             beforeRender: function(newData, oldData) {
-              alert('Hello from the beforeRender callback of product!');
+              // alert('Hello from the beforeRender callback of product!');
             },
             afterRender: function(newData, oldData) {                        
-              alert('Hello from the afterRender callback of product!');
+              // alert('Hello from the afterRender callback of product!');
             }
           },               
 
           home: {
-            handler: function (params) {
+            index: function (params) {
               var productsOnSale = _.filter(spaPayload.products, function(p) { return p.sale; });
               return { 
-                products: productsOnSale 
+                data: { products: productsOnSale }
               };
             }
           }
@@ -115,7 +114,7 @@
 
         mySpa.addRoutes([        
           { url: 'product=', controller: 'product' },
-          { url: null,       controller: 'home'    }
+          { controller: 'home', action: 'index'    }
         ]);
 
 

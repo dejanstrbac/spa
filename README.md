@@ -48,8 +48,8 @@ Dependencies
 Examples use [mustache.js](https://github.com/janl/mustache.js) but that is only a matter of taste. I prefer logic-less templates. 
 You can use any engine you wish by defining your renderer.
 
-[underscore.js](http://documentcloud.github.com/underscore/) fits naturally here as you will probably be parsing potentially huge amounts of JSON data.
-Functional helpers might be of good use. Underscore also has own templating engine so you might prefer that one instead of mustache. 
+[underscore.js](http://documentcloud.github.com/underscore/) fits naturally in your controllers as you will probably be parsing potentially huge amounts of JSON data.
+Functional helpers might be of good use. Underscore also has own templating engine so you might prefer that one instead of mustache. You are free to define your own renderer.
 The supplied example uses underscore for filtering the JSON data.
 
 
@@ -61,74 +61,59 @@ Usage
       <script src="jquery.min.js" type="text/javascript"></script>
       <script src="jquery.spa.js" type="text/javascript"></script>
 
-      <!-- mustache.js is not required -->
+      <!-- mustache.js is not required - include any library you want to use for template rendering -->
       <script src="jquery.mustache.js" type="text/javascript"></script>
 
 
-  2) Define templates including 404
-
-      <div id="spa__home" class="spa__template" style="display:none">
-        <h1>{{product.title}}</h1>
-      </div>
-
-      <div id="spa__product" class="spa__template" style="display:none">
-        <h1>{{product.title}}</h1>
-      </div>
-
-      <div id="spa__404" class="spa__template" style="display:none">
-        <h1>Page not found!</h1>
-      </div>
-
-
-  3) Initialize data
+  2) Initialize data
 
         var jsonPayload = {...}; // your own JSON data
         
 
-  4) Define the container for the dynamic content
+  3) Define the container for the dynamic content
           
         var mySpa = $('#app_container').spa();
 
 
-  5) Define your template rendering engine - in this case Mustache.js
+  4) Define your template rendering engine - in this case Mustache.js
 
         mySpa.setRenderer( function(template, data) {          
           return Mustache.render(template, data) // render the templates as you wish here
         });
 
 
-  6) Add your single action controllers
+  5) Add your single action controllers by naming the action 'handler'. In case you want to use multiple actions
+     per controller, you have to name the action in the route (see below).
 
           mySpa.addControllers({
             product: {
               handler: function (params) {
                   // do something here with the params array passed 
                   // and return data you want for the template to show, or return null to show 404.
-                  return {
-                    // data to be passed to the template
+                  return { 
+                    data: {},     // data to be passed to the template
+                    options: {} // any additional options to be passed before rendering                    
                   }; 
                 }
-              },
-              // template: 'product' // assumed - define if using different than the name of the controller
-              // beforeRender
-              // afterRender
+              }
+              // beforeRender callback
+              // afterRender callback
             },
             home: {
               handler: function (params) {
                   // fetch home page data...
                   return {  
-                    // return data for the home page template
+                    // data + options
                   }; 
                 }
-              },
-              // template: 'home' // assumed - define if using different than the name of the controller
+              }
             }
           });
 
         });
 
 
-  7) Add your routes
+  6) Add your routes
 
         mySpa.addRoutes([        
           { url: 'product=', controller: 'product' }, // highest priority on the top...
@@ -136,13 +121,31 @@ Usage
         ]);
 
 
+  7) Define templates including the 404 page.
+
+      <script type="text/html" id="spa__home">
+        <h1>{{product.title}}</h1>
+      </script>
+
+      <script type="text/html" id="spa__product">
+        <h1>{{product.title}}</h1>
+      </script>
+
+      <script type="text/html" id="spa__404">
+        <h1>Page not found!</h1>
+      </script>
+
+
   8) Run and pull the cork out!
 
         mySpa.run();
 
 
+
+Custom Actions
+---------------
+
+
 TODO
 -----
   * tests
-  * multi-action controllers? y/n?
-  * can template name be assumed from the controller/action name?
