@@ -19,45 +19,64 @@
 (function( $ ) {
   $.fn.spa = $.fn.spa || function() {
   
-    var containerElement,         // - memoize the container element as it is accessed often
-        paramsState,              // - in case we update some value in url, keeping here the remaining context
-        legacyHash,               //
-        memoizedTemplates = {},   //
-        templateData,
+    var containerElement,         // -> memoize the container element as it is accessed often
+        paramsState,              // -> in case we update some value in url, keeping here the remaining context
+        savedHash,                // -> save the hash in case of polling, so we execute only per change
+        memTemplates = {},        // -> all templates are stored in memory so no repetive DOM access is needed
+        templateData,             // -> storing the previous data might give a better context to the controller
+        controllers  = {},        // -> developer defined controllers       
+        routes       = [],        //    and routes are attached here
 
-        controllers = {},         // - developer defined controllers       
-        routes      = [],         //   and routes are attached here
 
-
+        /* ---------------------------------------------------------------------- *
+         * Not all browser support the onhashchange event. We must check
+         * and if not supported fallback to alternative solution of polling.
+         *
+         * Check taken from Modernizr.js: documentMode logic from YUI to filter 
+         * out IE8 Compatibility Mode which gives false positives
+         * ---------------------------------------------------------------------- */
         isHashChangeSupported = function() {
-          // Modernizr check documentMode logic from YUI to filter out 
-          // IE8 Compatibility Mode which gives false positives.
-          return ('onhashchange' in window) && (document.documentMode === undefined || document.documentMode > 7);
+          return ('onhashchange' in window) && 
+                 (document.documentMode === undefined || document.documentMode > 7);
         },
 
 
-        templateRenderer = function() {
+        /* ---------------------------------------------------------------------- *
+         * SPA does not include own renderer. It must be defined by calling 
+         * setRenderer() which will override this method.
+         * ---------------------------------------------------------------------- */
+        templateRenderer = function() {          
           throw new Error('(SPA) no template renderer defined');
         },
 
 
+        /* ---------------------------------------------------------------------- *
+         * Rendering, wrapping and setting of the template into the defined
+         * application container.
+         * 
+         * Wrapping is done so that the effort of insertion as well deletion is
+         * minimal on the DOM. At the same time, removal is done before setting
+         * so that the possible events are cleared, preventing memory leaks.
+         * ---------------------------------------------------------------------- */
         renderTemplate = function(name, data) {
-          var template = memoizedTemplates[name],
-              renderedTemplate;
+          var template = memTemplates[name],
+              view     = '<div id="spa__wrap">';
+
           if (template) {
-            renderedTemplate = templateRenderer( template, data, memoizedTemplates);            
-            // wrapping with a single element lowers the DOM insertion effort
-            // as we do not know the content being rendered
-            renderedTemplate = '<div id="spa__wrap">' + renderedTemplate + '</div>';
-            containerElement.html( renderedTemplate );
+            view += templateRenderer( template, data, memTemplates) + '</div>';
+            containerElement.empty().html( view );
           } else {
             throw new Error('(SPA) template does not exist >> ' + name);
           }
         },
 
 
-        getParams = function() {
-            var qs     = location.hash,
+        /* ---------------------------------------------------------------------- *
+         * Parsing of the the current location hash and splitting it in 
+         * a HTTP/GET style into parameters which are returned.
+         * ---------------------------------------------------------------------- */
+        getParams = function(str) {
+            var qs     = str || window.location.hash,
                 params = {},
                 tokens = null,
                 re     = /[?&]?([^=]+)=([^&]*)/g;
@@ -72,55 +91,62 @@
         },
 
 
-        routeTo = function(hUrl) {
-          var matchedRoute;
-          for (var i = 0; (i < routes.length) && !matchedRoute; i++) { // stop as soon as a matching route is found
-            if (hUrl.indexOf(routes[i].url) > 0) {
-              matchedRoute = routes[i];
+        /* ---------------------------------------------------------------------- *
+         * Finding out the current route based on the information passed into
+         * the hash, and returning the route entry with all its content back.
+         * ---------------------------------------------------------------------- */        
+        getCurrentRoute = function() {
+          var currentHash = window.location.hash,
+              currentRoute;
+
+          if (currentHash != savedHash) { 
+            savedHash = currentHash;
+            if (currentHash.match( /^$|^#(?!\!).+/ )) { 
+              currentRoute = routes.slice(-1)[0]; // root route
+            } else if (currentHash.match(/^\#\!.+/)) {
+              for (var i = 0; (i < routes.length) && !currentRoute; i++) {                
+                if (currentHash.indexOf(routes[i].url) > 0) { 
+                  currentRoute = routes[i]; 
+                }
+              }
             }
           }
-          return matchedRoute;
+          return currentRoute;
         },
 
 
+        /* ---------------------------------------------------------------------- *
+         * Router is invoked on every hash change. The route is parsed and 
+         * compared to predefined routes. Matching controller/action is then 
+         * called and passed parameters found in the hash.
+         * ---------------------------------------------------------------------- */        
         router = function() {
-          var currentHash = window.location.hash,
-              routeEntry,
-              routedController,
-              routedAction,
+          var routeEntry       = getCurrentRoute(),
+              routedController = controllers[ routeEntry.controller ],
+              routedAction     = routedController[ routeEntry['action'] || 'handler' ],
               newTemplateData,
               templateToRender;
-          
-          if(currentHash != legacyHash) { 
-            legacyHash = currentHash;   // in case we are polling
-
-            if (currentHash.match( /^$|^#(?!\!).+/ )) {     // empty hash or anchor hash
-              routeEntry = routes.slice(-1)[0];             // root controller is the last one defined
-            } else if (currentHash.match(/^\#\!.+/)) {
-              routeEntry = routeTo( currentHash );          // hash present and requesting routing
-              if (!routeEntry) {                            // router failed to recognize the route
-                renderTemplate('404');
-                return;
-              }
-            }
-
-            routedController = controllers[ routeEntry.controller ];
-            routedAction = routedController[ routeEntry['action'] || 'handler' ];
-                        
-            paramsState = getParams();  // keep the old params available
+            
+          if (!routeEntry) {      
+            // route has not been recognized      
+            renderTemplate('404');
+          } else {                
+            // keep the old params available to be passed to controllers
+            paramsState = getParams(savedHash);  
             newTemplateData = routedAction( paramsState );
             if (newTemplateData) {
 
               if (routedController.beforeRender) {
                 routedController.beforeRender( newTemplateData.data, templateData );
-              }
-              
-              // if using actions, the default template is defined by the action
-              
-              templateToRender = routeEntry['controller']; // assume the controller name for the template
-              if (newTemplateData.options && newTemplateData.options['template']) { // has the controller passed a template to render?
+              }            
+
+              // assume the controller name for the template              
+              templateToRender = routeEntry['controller'];              
+              // the controller can pass a template to render in the options part of returned hash
+              if (newTemplateData.options && newTemplateData.options['template']) {
                 templateToRender = newTemplateData.options['template'];
-              } else if (routeEntry['action']) {                                    // if action passed, assume action name as template
+              } else if (routeEntry['action']) {                                    
+                // if action passed, assume action name as template
                 templateToRender += '__' + routeEntry['action'];
               } 
               renderTemplate( templateToRender || routedController.template, newTemplateData.data );
@@ -128,15 +154,21 @@
               if (routedController.afterRender) {
                 routedController.afterRender( newTemplateData.data, templateData );
               }
-
               templateData = newTemplateData.data;
             } else {
+              // the route has been recognized, but the controller
+              // returned an empty response - probably the object does not exist
+              // in the payload (wrong id most likely)
               renderTemplate('404');
             }
-          } 
+          }
         };
 
 
+    /* ---------------------------------------------------------------------- *
+     *  Actual initialization of the jQuery object with SPA happens here. The 
+     *  templates are being fetched and memoized, as well the app container.
+     * ---------------------------------------------------------------------- */        
     containerElement = this;
     if (!containerElement.length) {
       throw new Error('(SPA) container does not exist');
@@ -145,22 +177,28 @@
     $("script[type='text/html']").map( function(i, el) { 
       var templateEl = $(el),
           templateName = templateEl.attr('id');
+
       if (templateName.substr(0,5) === 'spa__') {
         templateName = templateName.substring(5);
       }
-      memoizedTemplates[ templateName ] = templateEl.html();
+      memTemplates[ templateName ] = templateEl.html();
     });
 
 
+    /* ---------------------------------------------------------------------- *
+     * Public interfaces to SPA element are returned upon the element call so
+     * one can set controllers, renderer and routes.
+     * ---------------------------------------------------------------------- */        
     return {
       run: function() {
         if (isHashChangeSupported()) {
           $(window).bind('hashchange', router);
         } else {          
-          setInterval(router, 333); // IE 6, IE 7 and other hairdryers support
+          setInterval(router, 333);
         }      
-        router(); // on page load, pass through router to check if there 
-                  // is an initial request - copy/pasted link
+        // on page load, pass through router to check if there 
+        // is an initial request - e.g. copy/pasted link
+        router();
       },
 
       currentState: function() {
