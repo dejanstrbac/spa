@@ -22,7 +22,9 @@
     var containerElement,         // -> memoize the container element as it is accessed often
         paramsState,              // -> in case we update some value in url, keeping here the remaining context
         previousHash,             // -> save the hash in case of polling, so we execute only per change
-        memTemplates = {},        // -> all templates are stored in memory so no repetive DOM access is needed
+        memTemplates = {          // -> all templates are stored in memory so no repetitive DOM access is needed
+          '404': '<h1>404 Page not found</h1>'
+        },        
         templateData,             // -> storing the previous data might give a better context to the controller
         controllers  = {},        // -> developer defined controllers       
         routes       = [],        //    and routes are attached here
