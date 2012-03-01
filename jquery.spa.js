@@ -1,27 +1,27 @@
-//
-//               mm###########mmm
-//            m####################m
-//          m#####`"#m m###"""'######m
-//         ######*"  "   "   "mm#######
-//       m####"  ,             m"#######m       SPA (Single Page App) / jQuery
-//      m#### m*" ,'  ;     ,   "########m      
-//      ####### m*   m  |#m  ;  m ########      https://github.com/dejanstrbac/spa
-//     |######### mm#  |####  #m##########|
-//      ###########|  |######m############
-//      "##########|  |##################"
-//       "#########  |## /##############"
-//         ########|  # |/ m###########
-//          "#######      ###########"
-//            """"""       """""""""
-//
-//
+/*
+ *             mm###########mmm
+ *          m####################m
+ *        m#####`"#m m###"""'######m
+ *       ######*"  "   "   "mm#######
+ *     m####"  ,             m"#######m       SPA (Single Page App) / jQuery
+ *    m#### m*" ,'  ;     ,   "########m      
+ *    ####### m*   m  |#m  ;  m ########      https://github.com/dejanstrbac/spa
+ *   |######### mm#  |####  #m##########|
+ *    ###########|  |######m############
+ *    "##########|  |##################"
+ *     "#########  |## /##############"
+ *       ########|  # |/ m###########
+ *        "#######      ###########"
+ *          """"""       """""""""
+ */
+
 
 (function( $ ) {
   $.fn.spa = $.fn.spa || function() {
   
     var containerElement,         // -> memoize the container element as it is accessed often
         paramsState,              // -> in case we update some value in url, keeping here the remaining context
-        savedHash,                // -> save the hash in case of polling, so we execute only per change
+        previousHash,             // -> save the hash in case of polling, so we execute only per change
         memTemplates = {},        // -> all templates are stored in memory so no repetive DOM access is needed
         templateData,             // -> storing the previous data might give a better context to the controller
         controllers  = {},        // -> developer defined controllers       
@@ -95,19 +95,15 @@
          * Finding out the current route based on the information passed into
          * the hash, and returning the route entry with all its content back.
          * ---------------------------------------------------------------------- */        
-        getCurrentRoute = function() {
-          var currentHash = window.location.hash,
-              currentRoute;
+        getRouteFor = function(hash) {
+          var currentRoute;
 
-          if (currentHash != savedHash) { 
-            savedHash = currentHash;
-            if (currentHash.match( /^$|^#(?!\!).+/ )) { 
-              currentRoute = routes.slice(-1)[0]; // root route
-            } else if (currentHash.match(/^\#\!.+/)) {
-              for (var i = 0; (i < routes.length) && !currentRoute; i++) {                
-                if (currentHash.indexOf(routes[i].url) > 0) { 
-                  currentRoute = routes[i]; 
-                }
+          if (hash.match( /^$|^#(?!\!).+/ )) {  // root route or anchor
+            currentRoute = routes.slice(-1)[0]; 
+          } else if (hash.match(/^\#\!.+/)) {   // #! controller by params
+            for (var i = 0; (i < routes.length) && !currentRoute; i++) {                
+              if (hash.indexOf(routes[i].url) > 0) { 
+                currentRoute = routes[i]; 
               }
             }
           }
@@ -121,45 +117,55 @@
          * called and passed parameters found in the hash.
          * ---------------------------------------------------------------------- */        
         router = function() {
-          var routeEntry       = getCurrentRoute(),
-              routedController = controllers[ routeEntry.controller ],
-              routedAction     = routedController[ routeEntry['action'] || 'handler' ],
+          var routeEntry,
+              routedController,
+              routedAction,
               newTemplateData,
-              templateToRender;
-            
-          if (!routeEntry) {      
-            // route has not been recognized      
-            renderTemplate('404');
-          } else {                
-            // keep the old params available to be passed to controllers
-            paramsState = getParams(savedHash);  
-            newTemplateData = routedAction( paramsState );
-            if (newTemplateData) {
+              templateToRender,
+              currentHash = window.location.hash;
+          
+          if (currentHash != previousHash) { 
+            routeEntry = getRouteFor( currentHash );
+            previousHash = currentHash;
 
-              if (routedController.beforeRender) {
-                routedController.beforeRender( newTemplateData.data, templateData );
-              }            
-
-              // assume the controller name for the template              
-              templateToRender = routeEntry['controller'];              
-              // the controller can pass a template to render in the options part of returned hash
-              if (newTemplateData.options && newTemplateData.options['template']) {
-                templateToRender = newTemplateData.options['template'];
-              } else if (routeEntry['action']) {                                    
-                // if action passed, assume action name as template
-                templateToRender += '__' + routeEntry['action'];
-              } 
-              renderTemplate( templateToRender || routedController.template, newTemplateData.data );
-
-              if (routedController.afterRender) {
-                routedController.afterRender( newTemplateData.data, templateData );
-              }
-              templateData = newTemplateData.data;
-            } else {
-              // the route has been recognized, but the controller
-              // returned an empty response - probably the object does not exist
-              // in the payload (wrong id most likely)
+            if (!routeEntry) {      
+              // route has not been recognized      
               renderTemplate('404');
+            } else {              
+              routedController = controllers[ routeEntry.controller ];
+              routedAction = routedController[ routeEntry['action'] || 'handler' ];
+
+              // keep the old params available to be passed to controllers
+              paramsState = getParams(previousHash);  
+              newTemplateData = routedAction( paramsState );
+              if (newTemplateData) {
+
+                if (routedController.beforeRender) {
+                  routedController.beforeRender( newTemplateData.data, templateData );
+                }            
+
+                // assume the controller name for the template and using
+                // single action controllers called 'handler'
+                templateToRender = routeEntry['controller'];              
+                // the controller can pass a template to render in the options part of returned hash
+                if (newTemplateData.options && newTemplateData.options['template']) {
+                  templateToRender = newTemplateData.options['template'];
+                } else if (routeEntry['action']) {                                    
+                  // if action passed, assume action name as template
+                  templateToRender += '__' + routeEntry['action'];
+                } 
+                renderTemplate( templateToRender || routedController.template, newTemplateData.data );
+
+                if (routedController.afterRender) {
+                  routedController.afterRender( newTemplateData.data, templateData );
+                }
+                templateData = newTemplateData.data;
+              } else {
+                // the route has been recognized, but the controller
+                // returned an empty response - probably the object does not exist
+                // in the payload (wrong id most likely)
+                renderTemplate('404');
+              }
             }
           }
         };
@@ -190,6 +196,7 @@
      * one can set controllers, renderer and routes.
      * ---------------------------------------------------------------------- */        
     return {
+
       run: function() {
         if (isHashChangeSupported()) {
           $(window).bind('hashchange', router);
