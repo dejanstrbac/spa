@@ -121,6 +121,7 @@
         router = function() {
           var routeEntry,
               routedController,
+              routedActionName,
               routedAction,
               newTemplateData,
               templateToRender,
@@ -135,7 +136,8 @@
               renderTemplate('404');
             } else {              
               routedController = controllers[ routeEntry.controller ];
-              routedAction = routedController[ routeEntry['action'] || 'handler' ];
+              routedActionName = routeEntry['action'] || 'handler';
+              routedAction = routedController[ routedActionName ];
 
               // keep the old params available to be passed to controllers
               paramsState = getParams(previousHash);  
@@ -143,7 +145,7 @@
               if (newTemplateData) {
 
                 if (routedController.beforeRender) {
-                  routedController.beforeRender( newTemplateData.data, templateData );
+                  routedController.beforeRender( newTemplateData.data, templateData, routedAction );
                 }            
 
                 // assume the controller name for the template and using
@@ -153,13 +155,13 @@
                 if (newTemplateData.options && newTemplateData.options['template']) {
                   templateToRender = newTemplateData.options['template'];
                 } else if (routeEntry['action']) {                                    
-                  // if action passed, assume action name as template
+                  // if action passed, assume that action name as template definition
                   templateToRender += '__' + routeEntry['action'];
                 } 
                 renderTemplate( templateToRender || routedController.template, newTemplateData.data );
 
                 if (routedController.afterRender) {
-                  routedController.afterRender( newTemplateData.data, templateData );
+                  routedController.afterRender( newTemplateData.data, templateData, routedActionName );
                 }
                 templateData = newTemplateData.data;
               } else {
