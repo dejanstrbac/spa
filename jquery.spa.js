@@ -145,7 +145,7 @@
               if (newTemplateData) {
 
                 if (routedController.beforeRender) {
-                  routedController.beforeRender( newTemplateData.data, templateData, routedAction );
+                  routedController.beforeRender( newTemplateData.data, templateData, routedActionName );
                 }            
 
                 // assume the controller name for the template and using
