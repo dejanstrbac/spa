@@ -1,3 +1,4 @@
+
 /*
  *             mm###########mmm
  *          m####################m
@@ -16,7 +17,7 @@
  */
 
 
-(function( $ ) {
+;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
   
     var containerElement,         // -> memoize the container element as it is accessed often
