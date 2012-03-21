@@ -37,7 +37,8 @@ Browsing around the site can  completely be offloaded to the user, and request t
 made only for the parts that require server intervention. In an ecommerce app, that would be loging in or 
 shopping cart modifications, and redirecting to the server for purchase completion.
 
-Note that this is very early stage project, and lacks tests. Contributions are welcome!
+Note that this is very early stage project, and lacks tests, and changes often.
+Nevertheless, contributions are welcome!
 
 
 Dependencies 
