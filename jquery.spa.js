@@ -45,11 +45,16 @@
 
 
         /* ---------------------------------------------------------------------- *
-         * SPA does not include own renderer. It must be defined by calling 
+         * SPA includes own simple dummy renderer. It can be redefined by calling 
          * setRenderer() which will override this method.
          * ---------------------------------------------------------------------- */
-        templateRenderer = function() {          
-          throw new Error('(SPA) no template renderer defined');
+        templateRenderer = function(template, data) {          
+          for(var p in data) {
+            if (data.hasOwnProperty(p)) {
+              template = template.replace(new RegExp('{{'+p+'}}','g'), data[p]);
+            }
+          }
+          return template;
         },
 
 
