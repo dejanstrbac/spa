@@ -27,7 +27,9 @@
           '404': '<h1>404 Page not found</h1>'
         },
         viewsCache   = {},        // -> Views that can be cached are stored here 
+        objectsCache = {},        // -> helper cache for assisting caching in helpers and controllers
         controllers  = {},        // -> Developer defined controllers       
+        helpers      = {},
         routes       = [],        // -> And routes are attached here
         DEBUG        = false,
 
@@ -74,7 +76,7 @@
               renderedView,
               cacheKey;
 
-          data    = data || {};
+          data    = data    || {};
           options = options || {};
 
           // the cache key is the template name for nonmutating views, where the attribute cache 
@@ -93,7 +95,7 @@
             // so we can just set the cached template
             renderedView = viewsCache[cacheKey];
 
-            if (DEBUG) { console.log('used cached view: ' + cacheKey); }
+            if (DEBUG) { console.log('(SPA) views cache hit: ' + cacheKey); }
 
           } else {
             if (template) {
@@ -101,7 +103,7 @@
               if (renderedView) {
                 renderedView = '<div id="spa__wrap">' + renderedView + '</div>';
 
-                if (DEBUG) { console.log('rendered template: ' + templateId); }
+                if (DEBUG) { console.log('(SPA) views cache miss: ' + templateId); }
 
                 if (options.cache) {
                   viewsCache[cacheKey] = renderedView;
@@ -119,19 +121,20 @@
 
         /* ---------------------------------------------------------------------- *
          * Parsing of the the current location hash and splitting it in 
-         * a HTTP/GET style into parameters which are returned.
+         * REST-like parameters which are returned.
          * ---------------------------------------------------------------------- */
         getParams = function(str) {
-            var qs     = str || window.location.hash,
-                params = {},
-                tokens = null,
-                re     = /[?&]?([^=]+)=([^&]*)/g;
+            var qs       = str || window.location.hash,
+                params   = {},
+                qsArray,
+                pair;
 
             if (qs.match(/^\#\!/)) {
-              qs = qs.substr(2).split('+').join(' ');
-              while (tokens = re.exec(qs)) {
-                  params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
-              }              
+              qsArray = qs.substr(3).split('/');
+              while (qsArray.length != 0) {
+                pair = qsArray.splice(0, 2);
+                params[ pair[0] ] = pair[1];
+              }
             }
             return params;
         },
@@ -142,13 +145,15 @@
          * the hash, and returning the route entry with all its content back.
          * ---------------------------------------------------------------------- */        
         getRouteFor = function(hash) {
-          var currentRoute;
+          var currentRoute, 
+              regex;
 
-          if (hash.match( /^$|^#(?!\!).+/ )) {  // root route or anchor
+          if (hash.match( /^$|^#(?!\!).+/ )) {                                  // root route or anchor
             currentRoute = routes.slice(-1)[0]; 
-          } else if (hash.match(/^\#\!.+/)) {   // #! controller by params
+          } else if (hash.match(/^\#\!.+/)) {                                   // #! controller by params
             for (var i = 0; (i < routes.length) && !currentRoute; i++) {                
-              if (hash.indexOf(routes[i].url) > 0) { 
+              regex = new RegExp(routes[i].url);
+              if (regex.test(hash.slice(2))) {                
                 currentRoute = routes[i]; 
               }
             }
@@ -183,7 +188,7 @@
             if (!routeEntry) {      
               // route has not been recognized      
               renderTemplate('404');
-            } else {              
+            } else {
               routedController = controllers[ routeEntry.controller ];
               routedActionName = routeEntry['action'] || 'handler';
               routedAction = routedController[ routedActionName ];
@@ -200,12 +205,11 @@
 
               if (responseData) {
                 // The action responed to these parameters with data.
-                // Now the data is used for callbacks and rendering the view.
-
+                // Now the data is used for callbacks and rendering the view.                
 
                 // Before Render Callback
                 if (routedController.beforeRender) {
-                  if (DEBUG) { console.log('executing beforeRender callback'); }
+                  if (DEBUG) { console.log('(SPA) executing beforeRender callback'); }
                   routedController.beforeRender( responseData, routedActionName );
                 }            
 
@@ -232,9 +236,13 @@
 
                 // After Render Callback
                 if (routedController.afterRender) {
-                  if (DEBUG) { console.log('executing afterRender callback'); }
+                  if (DEBUG) { console.log('(SPA) executing afterRender callback'); }
                   routedController.afterRender( responseData, routedActionName );
                 }
+
+                // After Render we must ensure we are going to the page top
+                // this could be improved by making it smooth;
+                window.scrollTo(0, 0);
 
                 /* ------------------------------------------------------------------------------ */
               } else {
@@ -242,6 +250,7 @@
                 // probably the object does not exist in the payload (wrong id e.g.)
                 renderTemplate('404', null, { cache: true });
               }
+                          
             }
           }
         };
@@ -273,40 +282,73 @@
      * ---------------------------------------------------------------------- */        
     return {
 
-      run: function() {
+      cache: function(bucket, key, getter, shouldCache) {                       // SPA framework uses extensively caching internally,
+        var value;                                                              // but also the same mechanisms are opened for app use.
+        if (typeof shouldCache === 'undefined') {                               
+          shouldCache = true;                                                   
+        }
+        if (!objectsCache.hasOwnProperty(bucket)) {
+          objectsCache[bucket] = {};
+        }
+        if (shouldCache) {
+          value = objectsCache[bucket][key];         
+          if (!value) {
+            value = objectsCache[bucket][key] = getter(key);
+            if (DEBUG) { 
+              console.log('(SPA) objects cache miss: ' + bucket + ':' + key); 
+            }
+          } else {
+            if (DEBUG) { 
+              console.log('(SPA) objects cache hit: ' + bucket + ':' + key); 
+            }
+          }
+          return value;
+        } else {
+          delete objectsCache[bucket][key];
+          return getter(key);
+        }
+      },
+
+      run: function() {                                                         // starts the SPA app
         if (isHashChangeSupported()) {
           $(window).bind('hashchange', router);
         } else {          
           setInterval(router, 333);
-        }      
-        // on page load, pass through router to check if there 
-        // is an initial request - e.g. copy/pasted link
-        router();
+        }              
+        router();                                                               // initial params processing on paster ling e.g.
       },
 
-      getParams: function() {
+      getParams: function() {                                                   // used to fetch the current parameters
         return paramsState;
       },      
 
-      addControllers: function(newControllers) {
+      addHelpers: function(newHelpers) {                                        // used to access helper functions
+        $.extend(helpers, newHelpers);
+      },
+
+      helpers: function() {                                                     // used to access helper functions
+        return helpers;
+      },
+
+      addControllers: function(newControllers) {                                // used to attach new controllers
         $.extend(controllers, newControllers);
       },
 
-      addRoutes: function(newRoutes) {        
+      addRoutes: function(newRoutes) {                                          // used to attach new routes
         $.merge(routes, newRoutes);
       },
 
-      setRenderer: function(newRenderer) {
-        if ($.isFunction(newRenderer)) {
-          templateRenderer = newRenderer;
+      setRenderer: function(newRenderer) {                                      // the basic renderer is very simple
+        if ($.isFunction(newRenderer)) {                                        // hence we can extend it with own or use 
+          templateRenderer = newRenderer;                                       // a library - Mustache is recommended
         }        
       },
       
-      setDebug: function(value) {
+      setDebug: function(value) {                                               // if setDebug(true), messages will be shown in the console
         DEBUG = value;
       }
 
     };
 
   };
-})( jQuery );
+})( jQuery );                                                                   // multiple containers should be theoretically supported

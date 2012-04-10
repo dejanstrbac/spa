@@ -37,7 +37,7 @@ Browsing around the site can  completely be offloaded to the user, and request t
 made only for the parts that require server intervention. In an ecommerce app, that would be loging in or 
 shopping cart modifications, and redirecting to the server for purchase completion.
 
-Note that this is very early stage project, and lacks tests, and changes often.
+WARNING: This is very early stage project, and lacks tests, and changes often. Documentation might be outdated already!
 Nevertheless, contributions are welcome!
 
 
@@ -117,12 +117,12 @@ Usage
   6) Add your routes
 
         mySpa.addRoutes([        
-          { url: 'product=', controller: 'product' }, // highest priority on the top...
-          { controller: 'home' }                      // ...last route is always root - lowest priority, url can be excluded
+          { url: '^/product/[0-9]+$', controller: 'product',    action: 'show'  }, // highest priority on the top...
+          { url: '^/?$',              controller: 'collection', action: 'index' }  // ...last route is always root - lowest priority, url can be excluded
         ]);
 
 
-  7) Define templates including the 404 page.
+  7) Define templates including the 404 page if you wish.
 
       <script type="text/html" id="spa__home">
         <h1>{{product.title}}</h1>

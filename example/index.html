@@ -51,7 +51,7 @@
       <ul>
         {{#products}}
           <li>
-            <a href="#!product={{id}}">{{title}}</a>
+            <a href="#!/product/{{id}}">{{title}}</a>
           </li>
         {{/products}}
       </ul>
@@ -113,8 +113,8 @@
 
 
         mySpa.addRoutes([        
-          { url: 'product=', controller: 'product' },
-          { controller: 'home', action: 'index'    }
+          { url: '^/product/[0-9]+$', controller: 'product' },
+          { url: '^/?$',              controller: 'home', action: 'index'    }
         ]);
 
 
