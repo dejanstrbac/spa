@@ -20,15 +20,16 @@
 ;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
   
-    var containerElement,         // -> memoize the container element as it is accessed often
-        paramsState,              // -> in case we update some value in url, keeping here the remaining context
-        previousHash,             // -> save the hash in case of polling, so we execute only per change
-        memTemplates = {          // -> all templates are stored in memory so no repetitive DOM access is needed
+    var containerElement,         // -> Memoize the container element as it is accessed often
+        paramsState,              // -> In case we update some value in url, keeping here the remaining context
+        previousHash,             // -> Save the hash in case of polling, so we execute only per change
+        memTemplates = {          // -> All templates are stored in memory so no repetitive DOM access is needed
           '404': '<h1>404 Page not found</h1>'
-        },        
-        templateData,             // -> storing the previous data might give a better context to the controller
-        controllers  = {},        // -> developer defined controllers       
-        routes       = [],        //    and routes are attached here
+        },
+        viewsCache   = {},        // -> Views that can be cached are stored here 
+        controllers  = {},        // -> Developer defined controllers       
+        routes       = [],        // -> And routes are attached here
+        DEBUG        = false,
 
 
         /* ---------------------------------------------------------------------- *
@@ -47,11 +48,13 @@
         /* ---------------------------------------------------------------------- *
          * SPA includes own simple dummy renderer. It can be redefined by calling 
          * setRenderer() which will override this method.
+         *
+         * If there is a problem, it should return null or False.
          * ---------------------------------------------------------------------- */
         templateRenderer = function(template, data) {          
           for(var p in data) {
             if (data.hasOwnProperty(p)) {
-              template = template.replace(new RegExp('{{'+p+'}}','g'), data[p]);
+              template = template.replace( new RegExp('{{'+p+'}}','g'), data[p] );
             }
           }
           return template;
@@ -66,16 +69,51 @@
          * minimal on the DOM. At the same time, removal is done before setting
          * so that the possible events are cleared, preventing memory leaks.
          * ---------------------------------------------------------------------- */
-        renderTemplate = function(name, data) {
-          var template = memTemplates[name],
-              view     = '<div id="spa__wrap">';
+        renderTemplate = function(templateId, data, options) {
+          var template = memTemplates[templateId],
+              renderedView,
+              cacheKey;
 
-          if (template) {
-            view += templateRenderer( template, data, memTemplates) + '</div>';
-            containerElement.empty().html( view );
-          } else {
-            throw new Error('(SPA) template does not exist >> ' + name);
+          data    = data || {};
+          options = options || {};
+
+          // the cache key is the template name for nonmutating views, where the attribute cache 
+          // is just set to true. To cache same views but for different data, the attribute cache
+          // needs to be set to some data that will uniquely identify it - e.g. ID of a product.
+          if (options.cache) {
+            if (options.cache === true) {
+              cacheKey = templateId;
+            } else {
+              cacheKey = templateId + '-' + options.cache;
+            }
           }
+
+          if (options.cache && viewsCache.hasOwnProperty(cacheKey)) {            
+            // this view can be cached, and has been set already,
+            // so we can just set the cached template
+            renderedView = viewsCache[cacheKey];
+
+            if (DEBUG) { console.log('used cached view: ' + cacheKey); }
+
+          } else {
+            if (template) {
+              renderedView = templateRenderer( template, data );
+              if (renderedView) {
+                renderedView = '<div id="spa__wrap">' + renderedView + '</div>';
+
+                if (DEBUG) { console.log('rendered template: ' + templateId); }
+
+                if (options.cache) {
+                  viewsCache[cacheKey] = renderedView;
+                }
+              }  else {
+                throw new Error('(SPA) template could not be rendered >> ' + templateId);
+              }
+            } else {
+              throw new Error('(SPA) template does not exist >> ' + templateId);
+            }
+          }
+          containerElement.empty().html( renderedView );
         },
 
 
@@ -125,17 +163,22 @@
          * called and passed parameters found in the hash.
          * ---------------------------------------------------------------------- */        
         router = function() {
-          var routeEntry,
-              routedController,
-              routedActionName,
-              routedAction,
-              newTemplateData,
-              templateToRender,
-              currentHash = window.location.hash;
+          var currentHash = window.location.hash,
+
+              routeEntry,           // -> holds the route entry respective to current url hash
+              routedController,     // -> holds the controller for the recognized route above
+              routedActionName,     // -> holds the name of the action in the controller to be called
+              routedAction,         // -> points to the actual action function in the controller
+              params,               // -> the new params in the url hash are split here
+              responseData,         // -> the new data returned by the action
+              templateToRender;     // -> the id of the template that needs to be rendered
           
-          if (currentHash != previousHash) { 
+
+          // we must ensure we do not loop the same route/action
+          // in the case of IE6/7 polling technique
+          if (currentHash !== previousHash) { 
+            previousHash = currentHash; // stop polling immediately
             routeEntry = getRouteFor( currentHash );
-            previousHash = currentHash;
 
             if (!routeEntry) {      
               // route has not been recognized      
@@ -145,36 +188,59 @@
               routedActionName = routeEntry['action'] || 'handler';
               routedAction = routedController[ routedActionName ];
 
-              // keep the old params available to be passed to controllers
-              paramsState = getParams(previousHash);  
-              newTemplateData = routedAction( paramsState );
-              if (newTemplateData) {
+              // Split the url hash params after the "#!".
+              params = getParams( previousHash );  
+              
+              // call the respective route's defined action with the params 
+              // fetched from the hash and pass in the previous ones for possible
+              // context determination of the origin page if needed.
+              responseData = routedAction( params, paramsState );               //TODO: here we should be checking for cache??
+              paramsState = params;
 
+
+              if (responseData) {
+                // The action responed to these parameters with data.
+                // Now the data is used for callbacks and rendering the view.
+
+
+                // Before Render Callback
                 if (routedController.beforeRender) {
-                  routedController.beforeRender( newTemplateData.data, templateData, routedActionName );
+                  if (DEBUG) { console.log('executing beforeRender callback'); }
+                  routedController.beforeRender( responseData, routedActionName );
                 }            
+
 
                 // assume the controller name for the template and using
                 // single action controllers called 'handler'
-                templateToRender = routeEntry['controller'];              
+                templateToRender = routeEntry['controller'];   
+
+           
                 // the controller can pass a template to render in the options part of returned hash
-                if (newTemplateData.options && newTemplateData.options['template']) {
-                  templateToRender = newTemplateData.options['template'];
-                } else if (routeEntry['action']) {                                    
+                if (responseData.options && responseData.options['template']) {
+                  templateToRender = responseData.options['template'];
+                  delete responseData.options.template;
+                } else if ( routeEntry['action'] ) {                                    
                   // if action passed, assume that action name as template definition
                   templateToRender += '__' + routeEntry['action'];
                 } 
-                renderTemplate( templateToRender || routedController.template, newTemplateData.data );
 
+                
+                // Finally the template is rendered and the data and options given
+                // from the action are passed into.
+                renderTemplate( templateToRender, responseData.data, responseData.options);
+
+
+                // After Render Callback
                 if (routedController.afterRender) {
-                  routedController.afterRender( newTemplateData.data, templateData, routedActionName );
+                  if (DEBUG) { console.log('executing afterRender callback'); }
+                  routedController.afterRender( responseData, routedActionName );
                 }
-                templateData = newTemplateData.data;
+
+                /* ------------------------------------------------------------------------------ */
               } else {
-                // the route has been recognized, but the controller
-                // returned an empty response - probably the object does not exist
-                // in the payload (wrong id most likely)
-                renderTemplate('404');
+                // the route has been recognized, but the controller returned an empty response 
+                // probably the object does not exist in the payload (wrong id e.g.)
+                renderTemplate('404', null, { cache: true });
               }
             }
           }
@@ -218,9 +284,9 @@
         router();
       },
 
-      currentState: function() {
+      getParams: function() {
         return paramsState;
-      },
+      },      
 
       addControllers: function(newControllers) {
         $.extend(controllers, newControllers);
@@ -234,6 +300,10 @@
         if ($.isFunction(newRenderer)) {
           templateRenderer = newRenderer;
         }        
+      },
+      
+      setDebug: function(value) {
+        DEBUG = value;
       }
 
     };
