@@ -115,6 +115,7 @@
               throw new Error('(SPA) template does not exist >> ' + templateId);
             }
           }
+
           containerElement.empty().html( renderedView );
         },
 
@@ -187,7 +188,7 @@
 
             if (!routeEntry) {      
               // route has not been recognized      
-              renderTemplate('404');
+              renderTemplate('404', null, { cache: true });
             } else {
               routedController = controllers[ routeEntry.controller ];
               routedActionName = routeEntry['action'] || 'handler';
@@ -203,7 +204,7 @@
               paramsState = params;
 
 
-              if (responseData) {
+              if (responseData) {                                               //TODO: does this part really belong in the router??
                 // The action responed to these parameters with data.
                 // Now the data is used for callbacks and rendering the view.                
 
@@ -327,7 +328,12 @@
       },
 
       helpers: function() {                                                     // used to access helper functions
+        //TODO: maybe limit access?
         return helpers;
+      },
+
+      templates: function(templateId) {
+        return memTemplates[templateId];
       },
 
       addControllers: function(newControllers) {                                // used to attach new controllers
