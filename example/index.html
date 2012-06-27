@@ -3,7 +3,7 @@
   <head>
     <script src="js/jquery.min.js"></script>
     <script src="js/underscore.min.js"></script>
-    <script src="js/jquery.mustache.js"></script>
+    <script src="js/jquery.mustache.min.js"></script>
     <script src="../jquery.spa.js"></script>
 
 
@@ -65,10 +65,15 @@
     </script>
 
 
-    <!-- You need to define your own 404 template -->
-    <script type="text/html" id="spa__404">
-      <h1>Page not found!</h1>
+    <script type="text/html" id="spa__page__home">
+      This is the home text
     </script>
+
+    <script type="text/html" id="spa__page__example">
+      This is the example text
+    </script>
+
+
 
     <!--// END SPA TEMPLATES //-->
 
@@ -101,20 +106,36 @@
             }
           },               
 
-          home: {
-            index: function (params) {
-              var productsOnSale = _.filter(spaPayload.products, function(p) { return p.sale; });
-              return { 
-                data: { products: productsOnSale }
-              };
-            }
-          }
+          /*
+           *
+           * Static pages controller
+           *
+           *  Pages are embedded as templates in the page body,
+           *  cached fully per page identifier.
+           *
+           */
+          pages: {
+            show: function(params) {
+              var templateName = 'page__' + params['page'];
+              if (mySpa.templateExists(templateName)) {
+                return {
+                  options: {
+                    cache:    true,                                                   // assumes the mutating template id as cache key
+                    template: templateName                                            // custom template name - page identifier
+                  }
+                }
+              }
+            },
+          },
+
+
         });
 
 
         mySpa.addRoutes([        
           { url: '^/product/[0-9]+$', controller: 'product' },
-          { url: '^/?$',              controller: 'home', action: 'index'    }
+          { url: '^/page/',           controller: 'pages', action: 'show'  },
+          { url: '^/?$',              controller: 'home',  action: 'index'    }
         ]);
 
 
