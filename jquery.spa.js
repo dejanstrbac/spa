@@ -31,7 +31,7 @@
         previousParams = null, 
 
         // When hash listeners are not supported in older 
-        // browsers, we will poll for hash changes
+        // browsers, we will poll for hash changes every 333 milliseconds.
         pollingInterval = 333,
 
         // The SPA app logic is contained in the following objects. Contents
@@ -103,6 +103,10 @@
         },
 
 
+        // We need a simple way of redirecting, by default to SPA hash bang
+        // paths, buy also possibly with a different url method. This can for
+        // instance be used in the response from the controller, by returning
+        // a redirect option (see below).
         redirectToPath = function(destinationHashPath, url) {
           if (typeof url === 'undefined') {
             spaLog('(spa) redirecting page: ' + destinationHashPath);
@@ -116,7 +120,7 @@
         // Not all browser support the onhashchange event. We must check
         // and if not supported fallback to alternative solution of polling.
         // The check is taken from Modernizr.js: documentMode logic from YUI to filter 
-        // out IE8 Compatibility Mode which gives false positives
+        // out IE8 Compatibility Mode which gives false positives.
         isHashChangeSupported = function() {
           return ('onhashchange' in window) && 
                  (document.documentMode === undefined || document.documentMode > 7);
@@ -136,14 +140,21 @@
         },
 
 
+        // There are callbacks defined in multiple places in the router,
+        // such as beforeRender, afterRender etc. The logic is the same,  
+        // so this method has been extracted out and generalized. There are
+        // two levels of callbacks, one on the app level, which will run for
+        // every controller, and there are callbacks on the controller level.
+        // Controller callbacks have higher priority than the app ones as they
+        // are closer to the logic code.
         runCallbacks = function(callbackName, request, response) {
-          if (callbacks[callbackName]) {                                                     
-            (callbacks[callbackName])(request);
-            spaLog('(spa) callback ' + callbackName + '()');
-          }
           if (controllers[request.controller][callbackName]) {                  
             (controllers[request.controller][callbackName])(request, response);                   
             spaLog('(spa) callback ' + request.controller + '.' + callbackName + '()');
+          }
+          if (callbacks[callbackName]) {                                                     
+            (callbacks[callbackName])(request);
+            spaLog('(spa) callback ' + callbackName + '()');
           }
         },
 
@@ -159,6 +170,7 @@
           }
           return template;
         },
+
 
         // @TODO: We need a preloader here of content. Currently not so dry.
         //   routeEntry = routeFor(urlpath)
@@ -339,6 +351,10 @@
                   $("body,html,document").scrollTop(0);
                 }
 
+                // The response returned can ask for the app to redirect the page,
+                // most likely to another SPA hash bang path, but also to another url.
+                // Since this parameter runs late, after rendering, it can be nicely
+                // combined with renderNothing option or special template.
                 if (response.options.redirectTo) {                  
                   redirectToPath(response.options.redirectTo);
                 }
@@ -346,7 +362,7 @@
               } else {
                 // The route has been recognized, but the controller returned an 
                 // empty response probably the object does not exist in the 
-                // payload (wrong id e.g.)
+                // payload (like wrong id).
                 renderTemplate('404', null, { cache: true });
               }
 
@@ -385,7 +401,13 @@
     // and routes can be injected.
     return {
 
+      // The helpers object exposes some of the internals which might be found
+      // useful in the application, like templates, redirects and memoization.
+      // It is recommended to extend this object with own methods via 
+      // the addHelpers defined below, so everything related to this SPA app
+      // is kept in one object and place.
       helpers: {
+
         redirectTo: function(hashPath, url) {
           redirectToPath(hashPath, url);
         },
@@ -405,32 +427,104 @@
         }
       },
 
+      // Method which will selectively turn debug logging on or off.
       setDebug: function(value) {                                               
         if (typeof value !== 'undefined') {
           debugging = value;
         }
       },
 
+
+      // If the default renderer (templating engine) won't do, a new one 
+      // can be set via this method. The signiture is function(template, data),
+      // where template is a text/html file and data is of JSON format.
       setRenderer: function(newRenderer) {
+        delete(templateRenderer);
         templateRenderer = newRenderer;
       },
 
+
+      // With this method we can extend in bulk the helpers object below.
+      // Adding single methods is also easy by directly defining them on
+      // the spaApp.helpers.
       addHelpers: function(newHelpers) {
         $.extend(this.helpers, newHelpers);
       },
 
+
+      // Controllers hold the main app logic/actions and are injected here, 
+      // by extending the private object `controllers`. The argument 
+      // `newControllers` is expected to be an object whose properties are 
+      // controllers of own properties which are actions. 
+      //
+      // Properties with the following names beforeRender, afterRender, 
+      // beforeFilter & afterFilter define controller callbacks. To selectively
+      // execute code in the callback for specific action, you can switch over 
+      // the property `action` of the request argument, containing the name
+      // of the routed controller action.
+      //
+      // Example of a valid controller object:
+      //  {
+      //    pages: {
+      //       show: function(request) {
+      //          // generate some response and then return it as an object
+      //       }
+      //    },
+      //    afterRender: function(request, response) {
+      //                  if (request.action == 'show') {
+      //                    // some logic for the `show` action. 
+      //                  }
+      //                }
+      //  }    
       addControllers: function(newControllers) {
         $.extend(controllers, newControllers);
       },      
 
+
+      // Callbacks are methods which need to run after specific events in the code.
+      // While controllers can defined own callback which are of higher priority,
+      // here app level callbacks can be attached. The argument `newCallback` is 
+      // expected to be an object whose properties are callbacks with possible names 
+      // beforeRender, afterRender, beforeFilter & afterFilter define callbacks. 
+      // To selectively execute a callback for specific action, we can switch over 
+      // the name of the action present in the request argument. 
+      //
+      // Example of a valid callback:
+      //
+      //  { 
+      //    afterRender: function(request, response) { 
+      //                    if (request.action == 'show') {
+      //                      // do something here
+      //                    }
+      //                  }
+      //  }
+      //
       addCallbacks: function(newCallbacks) {
         $.extend(callbacks, newCallbacks);
       },
 
+
+      // Routes map url hash bang paths to controllers and their respective 
+      // actions. First added routes have higher priority as they are matched 
+      // via regular expressions. The argument `newRoutes` is expected to be an 
+      // array of object paths. 
+      //
+      // Example of a valid array of object paths:
+      //
+      //  [ 
+      //    { url: '^/product/[0-9]+$', controller: 'product', action: 'show' },
+      //    { url: '^/action/',         controller: 'actions'                 }
+      //  ]
+      //
+      // If action property is ommited as above, the app will assume it's 
+      // called `handler`. You can define as many routes as needed.
       addRoutes: function(newRoutes) {
         $.merge(routes, newRoutes);
       },
       
+
+      // Start the app by triggering the router to start listening for path
+      // changes. The method has been wrapped in anonymous action for future changes.
       run: function() {
         startRouter();
       }
