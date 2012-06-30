@@ -1,3 +1,4 @@
+
 /*
  *             mm###########mmm
  *          m####################m
@@ -21,13 +22,13 @@
     // Start by memoizing the container element. By attaching to the container,
     // multiple containers & spa apps should be theoretically supported, while 
     // they would have to share URL namespace and routes.
-    var containerElement  = this,
+    var containerElement = this,
         
         // Previous app state is saved given in the request to the controller as
         // aid for context determination. In most cases it is not needed or used,
         // but could be helpful for having a "last seen products" etc.
-        previousHash      = null, 
-        previousParams    = null, 
+        previousHash   = null, 
+        previousParams = null, 
 
         // When hash listeners are not supported in older 
         // browsers, we will poll for hash changes
@@ -35,9 +36,9 @@
 
         // The SPA app logic is contained in the following objects. Contents
         // are injected via public interfaces.
-        routes        = [],        
-        controllers   = {},
-        callbacks     = {},
+        routes      = [],        
+        controllers = {},
+        callbacks   = {},
         
         // All templates are stored in memory so no repetitive DOM access is needed.
         templatesMemo = {         
@@ -102,9 +103,13 @@
         },
 
 
-        redirectToPath = function(destinationPath) {
-          spaLog('(spa) redirecting page: ' + destinationPath);
-          location.hash = '#!' + destinationPath;
+        redirectToPath = function(destinationHashPath, url) {
+          if (typeof url === 'undefined') {
+            spaLog('(spa) redirecting page: ' + destinationHashPath);
+            location.hash = '#!' + destinationHashPath;
+          } else {
+            location = url + (destinationHashPath || '');
+          }
         },
 
 
@@ -247,7 +252,7 @@
         // compared to predefined routes. Matching controller/action is then 
         // called and passed parameters found in the hash.
         router = function() {
-          var currentHash       = window.location.hash || '#!/',
+          var currentHash       = location.hash || '#!/',
               pollingAllowed    = true,
               matchedRouteEntry = null,
               request           = null,
@@ -381,6 +386,10 @@
     return {
 
       helpers: {
+        redirectTo: function(hashPath, url) {
+          redirectToPath(hashPath, url);
+        },
+
         existsTemplate: function(templateName) {
           return templatesMemo.hasOwnProperty(templateName);
         },
