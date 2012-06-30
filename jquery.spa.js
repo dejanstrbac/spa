@@ -462,20 +462,6 @@
       // execute code in the callback for specific action, you can switch over 
       // the property `action` of the request argument, containing the name
       // of the routed controller action.
-      //
-      // Example of a valid controller object:
-      //  {
-      //    pages: {
-      //       show: function(request) {
-      //          // generate some response and then return it as an object
-      //       }
-      //    },
-      //    afterRender: function(request, response) {
-      //                  if (request.action == 'show') {
-      //                    // some logic for the `show` action. 
-      //                  }
-      //                }
-      //  }    
       addControllers: function(newControllers) {
         $.extend(controllers, newControllers);
       },      
@@ -483,22 +469,13 @@
 
       // Callbacks are methods which need to run after specific events in the code.
       // While controllers can defined own callback which are of higher priority,
-      // here app level callbacks can be attached. The argument `newCallback` is 
-      // expected to be an object whose properties are callbacks with possible names 
-      // beforeRender, afterRender, beforeFilter & afterFilter define callbacks. 
-      // To selectively execute a callback for specific action, we can switch over 
-      // the name of the action present in the request argument. 
+      // here app level callbacks can be attached. 
       //
-      // Example of a valid callback:
-      //
-      //  { 
-      //    afterRender: function(request, response) { 
-      //                    if (request.action == 'show') {
-      //                      // do something here
-      //                    }
-      //                  }
-      //  }
-      //
+      // The argument `newCallback` is  expected to be an object whose properties are 
+      // callbacks with possible names beforeRender, afterRender, beforeFilter 
+      // & afterFilter define callbacks. To selectively execute a callback for 
+      // specific action, we can switch over the name of the action present in 
+      // the request argument. 
       addCallbacks: function(newCallbacks) {
         $.extend(callbacks, newCallbacks);
       },
@@ -509,14 +486,7 @@
       // via regular expressions. The argument `newRoutes` is expected to be an 
       // array of object paths. 
       //
-      // Example of a valid array of object paths:
-      //
-      //  [ 
-      //    { url: '^/product/[0-9]+$', controller: 'product', action: 'show' },
-      //    { url: '^/action/',         controller: 'actions'                 }
-      //  ]
-      //
-      // If action property is ommited as above, the app will assume it's 
+      // If action property is ommited above, the app will assume it's 
       // called `handler`. You can define as many routes as needed.
       addRoutes: function(newRoutes) {
         $.merge(routes, newRoutes);
