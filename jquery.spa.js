@@ -41,7 +41,14 @@
 
 ;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
+        // In the app routes, if there is no action defined, this one will be
+        // assumed. This makes sense when there is a single action controller.
     var DEFAULT_ACTION_NAME = 'handler',
+
+        // The default delay in milliseconds between requests for preloading
+        // images is defined here. If there are too many images and all requests
+        // are made at once, the app might be irresponsive, hence this timeout.
+        IMAGE_PRELOADING_DELAY = 50;
 
 
         // Start by memoizing the container element. By attaching to the container,
@@ -337,7 +344,8 @@
         preloadPath = function(destinationPath) {
           var preloadRoute = getRouteFor(destinationPath),
               currentPath  = location.hash || '#!/',
-              request      = null;
+              request      = null,
+              renderedView = null;
 
           if (preloadRoute) {
             request = {
@@ -353,12 +361,26 @@
             // the response for possible future request.
             response = getControllerActionResponseFor(request);
 
-            // Preloading does not return anything nor does it render any templates.
-            // Rendering is being called only to memoize the response which is here
-            // discarded.
+            // Preloading does not return anything nor does it render any templates
+            // into the container. Renderer is being called only to memoize the
+            // response which is here used only to further preloading.
             if (!response.options.renderNothing) {
               response.options.template = getTemplateNameFor(request, response);
-              renderTemplate(response);
+
+              renderedView = renderTemplate(response);
+              if (response.options.preloadImages) {
+                // Since images take most time to load, they can be preloaded along
+                // with the rendered template. However, they are queued so there are
+                // max ~10 images preloaded per second.
+                $(renderedView).find('img').each(function(i) {
+                  var imageSource = this.src;
+                  setTimeout(function(){
+                    spaLog('(spa) preloading image: ' + imageSource);
+                    $('<img/>')[0].src = imageSource;
+                  }, i * IMAGE_PRELOADING_DELAY);
+                });
+              }
+
             }
             spaLog('(spa) preloaded path: ' + destinationPath);
           }
