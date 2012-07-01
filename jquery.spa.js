@@ -26,12 +26,12 @@
         
         // Previous app state is saved given in the request to the controller as
         // aid for context determination. In most cases it is not needed or used,
-        // but could be helpful for having a "last seen products" etc.
+        // but could be helpful for having a section of last seen pages e.g.
         previousHash   = null, 
         previousParams = null, 
 
-        // When hash listeners are not supported in older 
-        // browsers, we will poll for hash changes every 333 milliseconds.
+        // When hash listeners are not supported in older browsers, we will poll 
+        // for hash changes every 333 milliseconds.
         pollingInterval = 333,
 
         // The SPA app logic is contained in the following objects. Contents
@@ -46,7 +46,7 @@
         },
 
         // Helper memo for aiding memoization in helpers and controllers,
-        // so extraction  from payload is optimized.
+        // so extraction from payload is optimized.
         objectsMemo = {},
 
         // There is quite a lot of stuff happening within SPA, although fairly
@@ -119,8 +119,8 @@
 
         // Not all browser support the onhashchange event. We must check
         // and if not supported fallback to alternative solution of polling.
-        // The check is taken from Modernizr.js: documentMode logic from YUI to filter 
-        // out IE8 Compatibility Mode which gives false positives.
+        // The following check is taken from Modernizr.js: documentMode logic 
+        // from YUI to filter out IE8 Compatibility Mode which gives false positives.
         isHashChangeSupported = function() {
           return ('onhashchange' in window) && 
                  (document.documentMode === undefined || document.documentMode > 7);
@@ -141,7 +141,7 @@
 
 
         // There are callbacks defined in multiple places in the router,
-        // such as beforeRender, afterRender etc. The logic is the same,  
+        // such as `beforeRender`, `afterRender` etc. The logic is the same,  
         // so this method has been extracted out and generalized. There are
         // two levels of callbacks, one on the app level, which will run for
         // every controller, and there are callbacks on the controller level.
@@ -160,7 +160,7 @@
 
 
         // SPA includes own simple dummy renderer. It can be redefined by calling 
-        // setRenderer() which will override this method. If there is a problem, 
+        // `setRenderer()` which will override this method. If there is a problem, 
         // it should return null or false.
         templateRenderer = function(template, data) {          
           for(var p in data) {
@@ -194,7 +194,7 @@
           // The cache key is the template name for nonmutating views, where the 
           // attribute cache is just set to true. To cache same views but for 
           // different data, the attribute cache needs to be set to some data 
-          // that will uniquely identify it - e.g. ID of a product.
+          // that will uniquely identify it - e.g. id of a product.
           if (options.cache) {
             if (options.cache === true) {
               cacheKey = templateId;
@@ -243,7 +243,7 @@
         
         // Finding out the current route based on the information passed into
         // the hash, and returning the route entry with all its content back.
-        // SPA routes start with '#!'' - (hash bang).
+        // SPA routes start with `#!` - (hash bang).
         getRouteFor = function(hash) {
           var currentRoute = null;
           // We will first try matching the root route, as with highest priority.
@@ -295,8 +295,8 @@
                 action         : matchedRouteEntry.action || 'handler'
               }
               
-              // Run the callbacks defined in controller and on top level. Note
-              // that the response doesn't exist yet so it is not passed here.              
+              // Run the `beforeFilter` callbacks defined in controller and on top 
+              // level. Note that the response doesn't exist yet so it is not passed here.              
               runCallbacks('beforeFilter', request);
               
               // Call the respective route's defined action with the params 
@@ -304,7 +304,7 @@
               // context determination of the origin page if needed.
               response = (controllers[request.controller][request.action])(request);
 
-              // The afterFilter callback might be useful, if we are not concerned 
+              // The `afterFilter` callback might be useful, if we are not concerned 
               // whether the controller action responded at all, but still need
               // to do after controller processing.
               runCallbacks('afterFilter', request, response);
@@ -312,16 +312,16 @@
               // If the controller action responed to hash parameters with data,
               // we can proceed to callbacks and rendering.
               if (response) {
-                // The beforeRender callback might be useful for cleaning up the
+                // The `beforeRender` callback might be useful for cleaning up the
                 // previous view or detaching some events.
                 runCallbacks('beforeRender', request, response);
 
                 // Assume the controller name for the template and using
-                // single action controllers called 'handler'.
+                // single action controllers called `handler`.
                 templateToRender = request.controller;
            
                 // The controller can pass a name of the template to render 
-                // in the options  part of the response. Otherwise it can be
+                // in the options part of the response. Otherwise it can be
                 // assumed by the action name.
                 if (response.options && response.options.template) {
                   templateToRender = response.options.template;
@@ -342,7 +342,7 @@
                   // from the action are passed into.
                   renderTemplate(templateToRender, response.data, response.options);
 
-                  // The afterRender callback is usually the place where DOM events 
+                  // The `afterRender` callback is usually the place where DOM events 
                   // should be attached to the newly rendered html.
                   runCallbacks('afterRender', request, response);
 
@@ -352,9 +352,11 @@
                 }
 
                 // The response returned can ask for the app to redirect the page,
-                // most likely to another SPA hash bang path, but also to another url.
-                // Since this parameter runs late, after rendering, it can be nicely
-                // combined with renderNothing option or special template.
+                // most likely to another SPA hash bang path, but also to another url 
+                // via the returned `redirectTo` property.
+                //
+                // Since this executes late, after rendering, it can be combined
+                // with the `renderNothing` option to avoid any rendering before redirecting.
                 if (response.options.redirectTo) {                  
                   redirectToPath(response.options.redirectTo);
                 }
@@ -404,7 +406,7 @@
       // The helpers object exposes some of the internals which might be found
       // useful in the application, like templates, redirects and memoization.
       // It is recommended to extend this object with own methods via 
-      // the addHelpers defined below, so everything related to this SPA app
+      // the `addHelpers` defined below, so everything related to this SPA app
       // is kept in one object and place.
       helpers: {
 
@@ -446,7 +448,7 @@
 
       // With this method we can extend in bulk the helpers object below.
       // Adding single methods is also easy by directly defining them on
-      // the spaApp.helpers.
+      // the `spaApp.helpers`.
       addHelpers: function(newHelpers) {
         $.extend(this.helpers, newHelpers);
       },
@@ -457,8 +459,8 @@
       // `newControllers` is expected to be an object whose properties are 
       // controllers of own properties which are actions. 
       //
-      // Properties with the following names beforeRender, afterRender, 
-      // beforeFilter & afterFilter define controller callbacks. To selectively
+      // Properties with the following names `beforeRender`, `afterRender`, 
+      // `beforeFilter` & `afterFilter` define controller callbacks. To selectively
       // execute code in the callback for specific action, you can switch over 
       // the property `action` of the request argument, containing the name
       // of the routed controller action.
@@ -472,10 +474,12 @@
       // here app level callbacks can be attached. 
       //
       // The argument `newCallback` is  expected to be an object whose properties are 
-      // callbacks with possible names beforeRender, afterRender, beforeFilter 
-      // & afterFilter define callbacks. To selectively execute a callback for 
+      // callbacks with possible names `beforeRender`, `afterRender`, `beforeFilter`
+      // & `afterFilter` define callbacks. To selectively execute a callback for 
       // specific action, we can switch over the name of the action present in 
-      // the request argument. 
+      // the request argument passed to the callback. All callbacks accept two arguments
+      // `request` and `response`, except `beforeFilter` which accepts only `request`
+      // as it executes before the controller action. 
       addCallbacks: function(newCallbacks) {
         $.extend(callbacks, newCallbacks);
       },
