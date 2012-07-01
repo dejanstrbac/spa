@@ -73,7 +73,7 @@
           
           if (shouldMemoize) {
             // If the given key is an Array, casting to string will join its 
-            // elements [1,2] => "1,2" which is again sufficient for the key.
+            // elements (e.g.) [1,2] into "1,2" which is again sufficient for the key.
             key = key.toString();
 
             // Buckets allow to separate key/values by semantical meaning of 
@@ -145,6 +145,7 @@
         // so this method has been extracted out and generalized. There are
         // two levels of callbacks, one on the app level, which will run for
         // every controller, and there are callbacks on the controller level.
+        ///
         // Controller callbacks have higher priority than the app ones as they
         // are closer to the logic code.
         runCallbacks = function(callbackName, request, response) {
@@ -160,8 +161,8 @@
 
 
         // SPA includes own simple dummy renderer. It can be redefined by calling 
-        // `setRenderer()` which will override this method. If there is a problem, 
-        // it should return null or false.
+        // `setRenderer` which will override this method. If there is a problem, 
+        // it should return either null or false.
         templateRenderer = function(template, data) {          
           for(var p in data) {
             if (data.hasOwnProperty(p)) {
@@ -172,10 +173,10 @@
         },
 
 
-        // @TODO: We need a preloader here of content. Currently not so dry.
+        // `@TODO: We need a preloader here of content. Currently not so dry.
         //   routeEntry = routeFor(urlpath)
         //   response = ...
-        // maybe even use it in the router
+        // maybe even use it in the router`
           
 
         // Rendering, wrapping and setting of the template into the defined
@@ -260,7 +261,7 @@
         },
 
 
-        // Router is invoked on every hash change. The route is parsed and 
+        // The router is invoked on every hash change. The route is parsed and 
         // compared to predefined routes. Matching controller/action is then 
         // called and passed parameters found in the hash.
         router = function() {
@@ -282,8 +283,8 @@
             matchedRouteEntry = getRouteFor(currentHash);
 
             if (!matchedRouteEntry) {
-              // The Route has not been recognized and we need to simulate 404.
-              // The 404 template can be defined just as any other.
+              // The route has not been recognized and we need to simulate a 
+              // 404 response. The 404 template can be defined just as any other.
               renderTemplate('404', null, { cache: true });
             } else {
               request = {
@@ -387,8 +388,8 @@
       throw new Error('(spa) container does not exist');
     }    
     
-    // Views templates are fetched at initialization time and memoized into a 
-    // templatesMemo object from where they will be used instead from the DOM. 
+    // Views templates are fetched at initialization time and memoized into the
+    // `templatesMemo` object from where they will be used instead from the DOM. 
     $("script[type='text/html']").map( function(i, el) {       
       var templateEl   = $(el),
           templateName = templateEl.attr('id');
