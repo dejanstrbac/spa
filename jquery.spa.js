@@ -5,7 +5,7 @@
  *        m#####`"#m m###"""'######m
  *       ######*"  "   "   "mm#######
  *     m####"  ,             m"#######m       SPA (Single Page App) / jQuery
- *    m#### m*" ,'  ;     ,   "########m      
+ *    m#### m*" ,'  ;     ,   "########m
  *    ####### m*   m  |#m  ;  m ########      https://github.com/dejanstrbac/spa
  *   |######### mm#  |####  #m##########|
  *    ###########|  |######m############
@@ -20,28 +20,28 @@
   $.fn.spa = $.fn.spa || function() {
 
     // Start by memoizing the container element. By attaching to the container,
-    // multiple containers & spa apps should be theoretically supported, while 
+    // multiple containers & spa apps should be theoretically supported, while
     // they would have to share URL namespace and routes.
     var containerElement = this,
-        
+
         // Previous app state is saved given in the request to the controller as
         // aid for context determination. In most cases it is not needed or used,
         // but could be helpful for having a section of last seen pages e.g.
-        previousHash   = null, 
-        previousParams = null, 
+        previousHash   = null,
+        previousParams = null,
 
-        // When hash listeners are not supported in older browsers, we will poll 
+        // When hash listeners are not supported in older browsers, we will poll
         // for hash changes every 333 milliseconds.
         pollingInterval = 333,
 
         // The SPA app logic is contained in the following objects. Contents
         // are injected via public interfaces.
-        routes      = [],        
+        routes      = [],
         controllers = {},
         callbacks   = {},
-        
+
         // All templates are stored in memory so no repetitive DOM access is needed.
-        templatesMemo = {         
+        templatesMemo = {
           '404': '<h1>404 Page not found</h1>'
         },
 
@@ -55,31 +55,31 @@
 
         // Simple conditional internal logging method to analyze the flow
         // throughout the spa application.
-        spaLog = function(msg) { 
-          if (debugging) { 
-            console.log(msg); 
-          } 
+        spaLog = function(msg) {
+          if (debugging) {
+            console.log(msg);
+          }
         },
 
 
         // SPA framework uses extensively memoization (caching) internally, as
         // in catalog-like web apps, the likelyhood to browse back to a page is
-        // very high. the same mechanisms are opened for app use, by making this 
+        // very high. the same mechanisms are opened for app use, by making this
         // method public.
-        memoize = function(bucket, key, getterFunc, shouldMemoize) {                 
-          if (typeof shouldMemoize === 'undefined') { 
-            shouldMemoize = true; 
+        memoize = function(bucket, key, getterFunc, shouldMemoize) {
+          if (typeof shouldMemoize === 'undefined') {
+            shouldMemoize = true;
           }
-          
+
           if (shouldMemoize) {
-            // If the given key is an Array, casting to string will join its 
+            // If the given key is an Array, casting to string will join its
             // elements (e.g.) [1,2] into "1,2" which is again sufficient for the key.
             key = key.toString();
 
-            // Buckets allow to separate key/values by semantical meaning of 
+            // Buckets allow to separate key/values by semantical meaning of
             // the values in the application.
-            bucket = bucket.toString();            
-            objectsMemo[bucket] = objectsMemo[bucket] || {};        
+            bucket = bucket.toString();
+            objectsMemo[bucket] = objectsMemo[bucket] || {};
 
             // Simply check if the memo key is defined on the bucket.
             // Set it if it does not, otherwise just return it.
@@ -93,7 +93,7 @@
             }
             return objectsMemo[bucket][key];
           } else {
-            // Memoization is being skipped. If there was an existing memorized 
+            // Memoization is being skipped. If there was an existing memorized
             // value it should be invalidated/removed.
             if (objectsMemo[bucket] && objectsMemo[bucket].hasOwnProperty(key)) {
               delete objectsMemo[bucket][key];
@@ -119,29 +119,29 @@
 
         // Not all browser support the onhashchange event. We must check
         // and if not supported fallback to alternative solution of polling.
-        // The following check is taken from Modernizr.js: documentMode logic 
+        // The following check is taken from Modernizr.js: documentMode logic
         // from YUI to filter out IE8 Compatibility Mode which gives false positives.
         isHashChangeSupported = function() {
-          return ('onhashchange' in window) && 
+          return ('onhashchange' in window) &&
                  (document.documentMode === undefined || document.documentMode > 7);
         },
 
 
-        // Starts the SPA app router, not forgetting to process the current 
-        // hash path, so the SPA app jumps to the desired state - as in the 
+        // Starts the SPA app router, not forgetting to process the current
+        // hash path, so the SPA app jumps to the desired state - as in the
         // case of copy/pasting a whole url.
-        startRouter = function() {                                                         
+        startRouter = function() {
           if (isHashChangeSupported()) {
             $(window).bind('hashchange', router);
-          } else {          
+          } else {
             setInterval(router, pollingInterval);
-          }              
-          router();                                                             
+          }
+          router();
         },
 
 
         // There are callbacks defined in multiple places in the router,
-        // such as `beforeRender`, `afterRender` etc. The logic is the same,  
+        // such as `beforeRender`, `afterRender` etc. The logic is the same,
         // so this method has been extracted out and generalized. There are
         // two levels of callbacks, one on the app level, which will run for
         // every controller, and there are callbacks on the controller level.
@@ -149,21 +149,21 @@
         // Controller callbacks have higher priority than the app ones as they
         // are closer to the logic code.
         runCallbacks = function(callbackName, request, response) {
-          if (controllers[request.controller][callbackName]) {                  
-            (controllers[request.controller][callbackName])(request, response);                   
+          if (controllers[request.controller][callbackName]) {
+            (controllers[request.controller][callbackName])(request, response);
             spaLog('(spa) callback ' + request.controller + '.' + callbackName + '()');
           }
-          if (callbacks[callbackName]) {                                                     
+          if (callbacks[callbackName]) {
             (callbacks[callbackName])(request);
             spaLog('(spa) callback ' + callbackName + '()');
           }
         },
 
 
-        // SPA includes own simple dummy renderer. It can be redefined by calling 
-        // `setRenderer` which will override this method. If there is a problem, 
+        // SPA includes own simple dummy renderer. It can be redefined by calling
+        // `setRenderer` which will override this method. If there is a problem,
         // it should return either null or false.
-        templateRenderer = function(template, data) {          
+        templateRenderer = function(template, data) {
           for(var p in data) {
             if (data.hasOwnProperty(p)) {
               template = template.replace( new RegExp('{{'+p+'}}','g'), data[p] );
@@ -177,12 +177,12 @@
         //   routeEntry = routeFor(urlpath)
         //   response = ...
         // maybe even use it in the router`
-          
+
 
         // Rendering, wrapping and setting of the template into the defined
-        // application container. Wrapping is done so that the effort of 
-        // insertion as well deletion is minimal on the DOM. At the same time, 
-        // removal is done before setting so that the possible events are cleared, 
+        // application container. Wrapping is done so that the effort of
+        // insertion as well deletion is minimal on the DOM. At the same time,
+        // removal is done before setting so that the possible events are cleared,
         // preventing memory leaks.
         renderTemplate = function(templateId, data, options) {
           var template      = templatesMemo[templateId],
@@ -192,9 +192,9 @@
           data    = data    || {};
           options = options || {};
 
-          // The cache key is the template name for nonmutating views, where the 
-          // attribute cache is just set to true. To cache same views but for 
-          // different data, the attribute cache needs to be set to some data 
+          // The cache key is the template name for nonmutating views, where the
+          // attribute cache is just set to true. To cache same views but for
+          // different data, the attribute cache needs to be set to some data
           // that will uniquely identify it - e.g. id of a product.
           if (options.cache) {
             if (options.cache === true) {
@@ -204,12 +204,12 @@
             }
           }
 
-          // Using the same memoization mechanism defined above, we will 
+          // Using the same memoization mechanism defined above, we will
           // cache the views that allow it, so they do not need to be re-rendered.
           renderedView = memoize('spa__views', cacheKey, function() {
             var tmpView = null;
             if (template) {
-              tmpView = templateRenderer(template, data);              
+              tmpView = templateRenderer(template, data);
               if (tmpView) {
                 return '<div id="spa__wrap">' + tmpView + '</div>';
               } else {
@@ -222,9 +222,9 @@
 
           containerElement.empty().html(renderedView);
         },
-        
 
-        // Parsing of the the current location hash and splitting it in 
+
+        // Parsing of the the current location hash and splitting it in
         // REST-like parameters which are returned.
         getParams = function(str) {
           var qs       = str || location.hash,
@@ -241,7 +241,7 @@
           return params;
         },
 
-        
+
         // Finding out the current route based on the information passed into
         // the hash, and returning the route entry with all its content back.
         // SPA routes start with `#!` - (hash bang).
@@ -249,11 +249,11 @@
           var currentRoute = null;
           // We will first try matching the root route, as with highest priority.
           if (hash.match(/^$|^#(?!\!).+/)) {
-            currentRoute = routes.slice(-1)[0]; 
+            currentRoute = routes.slice(-1)[0];
           } else if (hash.match(/^\#\!.+/)) {
-            for (var i = 0; (i < routes.length) && !currentRoute; i+=1) {                
-              if (RegExp(routes[i].url).test(hash.slice(2))) {                
-                currentRoute = routes[i]; 
+            for (var i = 0; (i < routes.length) && !currentRoute; i+=1) {
+              if (RegExp(routes[i].url).test(hash.slice(2))) {
+                currentRoute = routes[i];
               }
             }
           }
@@ -261,51 +261,51 @@
         },
 
 
-        // The router is invoked on every hash change. The route is parsed and 
-        // compared to predefined routes. Matching controller/action is then 
+        // The router is invoked on every hash change. The route is parsed and
+        // compared to predefined routes. Matching controller/action is then
         // called and passed parameters found in the hash.
         router = function() {
           var currentHash       = location.hash || '#!/',
               pollingAllowed    = true,
               matchedRouteEntry = null,
               request           = null,
-              response          = null,             
-              templateToRender  = null;     
-          
+              response          = null,
+              templateToRender  = null;
+
 
           if (pollingAllowed && (currentHash !== previousHash)) {
-      
-            // In case of older browsers (IE6/7), where we use hash polling instead 
-            // of hash change events, polling needs to be terminated when we are 
-            // still on the same page, so unneccessary continous calls to the same 
+
+            // In case of older browsers (IE6/7), where we use hash polling instead
+            // of hash change events, polling needs to be terminated when we are
+            // still on the same page, so unneccessary continous calls to the same
             // controller/action & re-renderring is avoided.
             pollingAllowed = false;
             matchedRouteEntry = getRouteFor(currentHash);
 
             if (!matchedRouteEntry) {
-              // The route has not been recognized and we need to simulate a 
+              // The route has not been recognized and we need to simulate a
               // 404 response. The 404 template can be defined just as any other.
               renderTemplate('404', null, { cache: true });
             } else {
               request = {
                 path           : currentHash,
-                previousPath   : previousHash,                
+                previousPath   : previousHash,
                 params         : getParams(currentHash),
                 previousParams : previousParams,
                 controller     : matchedRouteEntry.controller,
                 action         : matchedRouteEntry.action || 'handler'
               }
-              
-              // Run the `beforeFilter` callbacks defined in controller and on top 
-              // level. Note that the response doesn't exist yet so it is not passed here.              
+
+              // Run the `beforeFilter` callbacks defined in controller and on top
+              // level. Note that the response doesn't exist yet so it is not passed here.
               runCallbacks('beforeFilter', request);
-              
-              // Call the respective route's defined action with the params 
+
+              // Call the respective route's defined action with the params
               // fetched from the hash and pass in the previous ones for possible
               // context determination of the origin page if needed.
               response = (controllers[request.controller][request.action])(request);
 
-              // The `afterFilter` callback might be useful, if we are not concerned 
+              // The `afterFilter` callback might be useful, if we are not concerned
               // whether the controller action responded at all, but still need
               // to do after controller processing.
               runCallbacks('afterFilter', request, response);
@@ -320,18 +320,18 @@
                 // Assume the controller name for the template and using
                 // single action controllers called `handler`.
                 templateToRender = request.controller;
-           
-                // The controller can pass a name of the template to render 
+
+                // The controller can pass a name of the template to render
                 // in the options part of the response. Otherwise it can be
                 // assumed by the action name.
                 if (response.options && response.options.template) {
                   templateToRender = response.options.template;
                   delete response.options.template;
-                } else if (request.action) {                                    
-                  // If action is passed, we will assume that action name 
+                } else if (request.action) {
+                  // If action is passed, we will assume that action name
                   // as template definition.
                   templateToRender += '__' + request.action;
-                } 
+                }
                 response.options.template = templateToRender;
 
                 // Some controller actions have no need of a rendered response.
@@ -343,34 +343,34 @@
                   // from the action are passed into.
                   renderTemplate(templateToRender, response.data, response.options);
 
-                  // The `afterRender` callback is usually the place where DOM events 
+                  // The `afterRender` callback is usually the place where DOM events
                   // should be attached to the newly rendered html.
                   runCallbacks('afterRender', request, response);
 
-                  // We must ensure we are scrolling to the page top, 
+                  // We must ensure we are scrolling to the page top,
                   // to simulate a well known page load behaviour
                   $("body,html,document").scrollTop(0);
                 }
 
                 // The response returned can ask for the app to redirect the page,
-                // most likely to another SPA hash bang path, but also to another url 
+                // most likely to another SPA hash bang path, but also to another url
                 // via the returned `redirectTo` property.
                 //
                 // Since this executes late, after rendering, it can be combined
                 // with the `renderNothing` option to avoid any rendering before redirecting.
-                if (response.options.redirectTo) {                  
+                if (response.options.redirectTo) {
                   redirectToPath(response.options.redirectTo);
                 }
 
               } else {
-                // The route has been recognized, but the controller returned an 
-                // empty response probably the object does not exist in the 
+                // The route has been recognized, but the controller returned an
+                // empty response probably the object does not exist in the
                 // payload (like wrong id).
                 renderTemplate('404', null, { cache: true });
               }
 
               // Previous hash and exploded params out of it are kept
-              // so they can be given in the next request's hash, as a 
+              // so they can be given in the next request's hash, as a
               // context aid.
               previousParams = request.params;
               previousHash   = currentHash;
@@ -379,21 +379,21 @@
               // again - influences only older browsers.
               pollingAllowed = true;
             }
-          }        
+          }
         };
 
     // Ensure there is a container of jQuery object / DOM element
     // to work with as a SPA. The rendering of pages will happen there.
     if (!containerElement.length) {
       throw new Error('(spa) container does not exist');
-    }    
-    
+    }
+
     // Views templates are fetched at initialization time and memoized into the
-    // `templatesMemo` object from where they will be used instead from the DOM. 
-    $("script[type='text/html']").map( function(i, el) {       
+    // `templatesMemo` object from where they will be used instead from the DOM.
+    $("script[type='text/html']").map( function(i, el) {
       var templateEl   = $(el),
           templateName = templateEl.attr('id');
-      
+
       if (templateName.substr(0,5) === 'spa__') {
         templateName = templateName.substring(5);
       }
@@ -406,7 +406,7 @@
 
       // The helpers object exposes some of the internals which might be found
       // useful in the application, like templates, redirects and memoization.
-      // It is recommended to extend this object with own methods via 
+      // It is recommended to extend this object with own methods via
       // the `addHelpers` defined below, so everything related to this SPA app
       // is kept in one object and place.
       helpers: {
@@ -423,22 +423,23 @@
           if (templatesMemo.hasOwnProperty(templateName)) {
             return templatesMemo[templateName];
           }
-        },    
+        },
 
         getMemoized: function(bucket, key, getterFunc, shouldMemoize) {
           return memoize(bucket, key, getterFunc, shouldMemoize);
         }
       },
 
+
       // Method which will selectively turn debug logging on or off.
-      setDebug: function(value) {                                               
+      setDebug: function(value) {
         if (typeof value !== 'undefined') {
           debugging = value;
         }
       },
 
 
-      // If the default renderer (templating engine) won't do, a new one 
+      // If the default renderer (templating engine) won't do, a new one
       // can be set via this method. The signiture is function(template, data),
       // where template is a text/html file and data is of JSON format.
       setRenderer: function(newRenderer) {
@@ -455,48 +456,48 @@
       },
 
 
-      // Controllers hold the main app logic/actions and are injected here, 
-      // by extending the private object `controllers`. The argument 
-      // `newControllers` is expected to be an object whose properties are 
-      // controllers of own properties which are actions. 
+      // Controllers hold the main app logic/actions and are injected here,
+      // by extending the private object `controllers`. The argument
+      // `newControllers` is expected to be an object whose properties are
+      // controllers of own properties which are actions.
       //
-      // Properties with the following names `beforeRender`, `afterRender`, 
+      // Properties with the following names `beforeRender`, `afterRender`,
       // `beforeFilter` & `afterFilter` define controller callbacks. To selectively
-      // execute code in the callback for specific action, you can switch over 
+      // execute code in the callback for specific action, you can switch over
       // the property `action` of the request argument, containing the name
       // of the routed controller action.
       addControllers: function(newControllers) {
         $.extend(controllers, newControllers);
-      },      
+      },
 
 
       // Callbacks are methods which need to run after specific events in the code.
       // While controllers can defined own callback which are of higher priority,
-      // here app level callbacks can be attached. 
+      // here app level callbacks can be attached.
       //
-      // The argument `newCallback` is  expected to be an object whose properties are 
+      // The argument `newCallback` is  expected to be an object whose properties are
       // callbacks with possible names `beforeRender`, `afterRender`, `beforeFilter`
-      // & `afterFilter` define callbacks. To selectively execute a callback for 
-      // specific action, we can switch over the name of the action present in 
+      // & `afterFilter` define callbacks. To selectively execute a callback for
+      // specific action, we can switch over the name of the action present in
       // the request argument passed to the callback. All callbacks accept two arguments
       // `request` and `response`, except `beforeFilter` which accepts only `request`
-      // as it executes before the controller action. 
+      // as it executes before the controller action.
       addCallbacks: function(newCallbacks) {
         $.extend(callbacks, newCallbacks);
       },
 
 
-      // Routes map url hash bang paths to controllers and their respective 
-      // actions. First added routes have higher priority as they are matched 
-      // via regular expressions. The argument `newRoutes` is expected to be an 
-      // array of object paths. 
+      // Routes map url hash bang paths to controllers and their respective
+      // actions. First added routes have higher priority as they are matched
+      // via regular expressions. The argument `newRoutes` is expected to be an
+      // array of object paths.
       //
-      // If action property is ommited above, the app will assume it's 
+      // If action property is ommited above, the app will assume it's
       // called `handler`. You can define as many routes as needed.
       addRoutes: function(newRoutes) {
         $.merge(routes, newRoutes);
       },
-      
+
 
       // Start the app by triggering the router to start listening for path
       // changes. The method has been wrapped in anonymous action for future changes.
