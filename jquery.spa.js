@@ -43,20 +43,24 @@
   $.fn.spa = $.fn.spa || function() {
     var DEFAULT_ACTION_NAME = 'handler',
 
+
         // Start by memoizing the container element. By attaching to the container,
         // multiple containers & SPA apps should be theoretically supported, while
         // they would have to share URL namespace and routes.
         containerElement = this,
 
+
         // Previous app state is saved given in the request to the controller as
         // aid for context determination. In most cases it is not needed or used,
-        // but could be helpful for having a section of last seen pages e.g.
+        // but could be helpful for having a section of e.g. last seen pages.
         previousPath   = null,
         previousParams = null,
 
+
         // When hash listeners are not supported in older browsers, we will poll
-        // for hash changes every 333 milliseconds.
+        // for hash changes every `333` milliseconds.
         pollingInterval = 333,
+
 
         // The SPA app logic is contained in the following objects. Contents
         // are injected via public interfaces.
@@ -64,18 +68,22 @@
         controllers = {},
         callbacks   = {},
 
+
         // All templates are stored in memory so no repetitive DOM access is needed.
         templatesMemo = {
           '404': '<h1>404 Page not found</h1>'
         },
 
+
         // Helper memo for aiding memoization in helpers and controllers,
         // so extraction from payload is optimized.
         objectsMemo = {},
 
+
         // There is quite a lot of stuff happening within SPA, although fairly
         // simple. Having some logging in development mode might be helpful.
         debugging = false,
+
 
         // Simple conditional internal logging method to analyze the flow
         // throughout the spa application.
@@ -99,7 +107,7 @@
 
           if (skipMemoize) {
             // If the given key is an Array, casting to string will join its
-            // elements (e.g.) [1,2] into "1,2" which is again sufficient for the key.
+            // elements (e.g.) `[1,2]` into `"1,2"` which is again sufficient for the key.
             key = key.toString();
 
             // Buckets allow to separate key/values by semantical meaning of
@@ -136,7 +144,7 @@
                 objectsMemo[bucket].hasOwnProperty(key)) {
               delete objectsMemo[bucket][key];
             }
-            // If getterFunc is null, the call is made just for deleting the
+            // If `getterFunc` is `null`, the call is made just for deleting the
             // memoized version, hence clearing the cache.
             if (getterFunc) {
               return getterFunc(key);
@@ -255,8 +263,8 @@
         // Based on request and response, this method will determine which
         // is the right template to render. It returns template name.
         getTemplateNameFor = function(request, response) {
-          // Assume the controller name for the template and using
-          // single action controllers called `handler`.
+          // Assume the controller name for the template and using single action
+          // controllers called `handler` as defined in `DEFAULT_ACTION_NAME`.
           var templateToRender = request.controller;
 
           // The controller can pass a name of the template to render
@@ -300,8 +308,8 @@
 
           // Using the same memoization mechanism defined above, we will
           // cache the views that allow it, so they do not need to be re-rendered.
-          // if the cacheKey is null the wrapped memoization method wil be circumvented
-          // and the getter function will be executed.
+          // if the `cacheKey` is `null` the wrapped memoization method will be
+          // circumvented and the getter function will be executed.
           renderedView = memoize('spa__views', cacheKey, function() {
             var tmpView = null;
             if (template) {
@@ -567,7 +575,7 @@
 
       // If the default renderer (templating engine) won't do, a new one
       // can be set via this method. The signiture is function(template, data),
-      // where template is a text/html file and data is of JSON format.
+      // where template is a `text/html` file and data is of JSON format.
       setRenderer: function(newRenderer) {
         delete(templateRenderer);
         templateRenderer = newRenderer;
