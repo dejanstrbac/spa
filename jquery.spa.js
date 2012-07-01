@@ -152,6 +152,7 @@
           }
         },
 
+
         // SPA includes own simple dummy renderer. It can be redefined by calling
         // `setRenderer` which will override this method. If there is a problem,
         // it should return either null or false.
