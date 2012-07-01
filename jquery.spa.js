@@ -48,7 +48,11 @@
         // The default delay in milliseconds between requests for preloading
         // images is defined here. If there are too many images and all requests
         // are made at once, the app might be irresponsive, hence this timeout.
-        IMAGE_PRELOADING_DELAY = 50;
+        IMAGE_PRELOADING_DELAY = 50,
+
+        // The limit of images to preload per render. Not all images are relevant
+        // considering that the visitor sees only a part of the page.
+        IMAGE_PRELOADING_LIMIT = 30,
 
 
         // Start by memoizing the container element. By attaching to the container,
@@ -342,10 +346,11 @@
         // next paths would only call callbacks, making the response time even
         // shorter.
         preloadPath = function(destinationPath) {
-          var preloadRoute = getRouteFor(destinationPath),
-              currentPath  = location.hash || '#!/',
-              request      = null,
-              renderedView = null;
+          var preloadRoute       = getRouteFor(destinationPath),
+              currentPath        = location.hash || '#!/',
+              request            = null,
+              renderedView       = null,
+              preloadImagesLimit = null;
 
           if (preloadRoute) {
             request = {
@@ -371,8 +376,16 @@
               if (response.options.preloadImages) {
                 // Since images take most time to load, they can be preloaded along
                 // with the rendered template. However, they are queued so there are
-                // max ~10 images preloaded per second.
-                $(renderedView).find('img').each(function(i) {
+                // max ~10 images preloaded per second, up to a maximum of
+                // IMAGE_PRELOADING_LIMIT images in total per one path
+                if (!isNaN(parseFloat(response.options.preloadImages))
+                    && isFinite(response.options.preloadImages)) {
+                  preloadImagesLimit = response.options.preloadImages;
+                } else {
+                  preloadImagesLimit = IMAGE_PRELOADING_LIMIT;
+                }
+
+                $(renderedView).find('img').slice(0, preloadImagesLimit).each(function(i) {
                   var imageSource = this.src;
                   setTimeout(function(){
                     spaLog('(spa) preloading image: ' + imageSource);
@@ -393,7 +406,7 @@
         // paths, `preloadPath` method will be called to memoize controller actions
         // and rendered templates. The method will return all preloaded paths in
         // case they are needed in the controller.
-        preloadElementPaths = function(el) {
+        preloadPossiblePaths = function(el) {
           var preloadedPaths = [];
           el.find('a').each(function() {
             var nextPath = $(this).attr('href');
@@ -486,7 +499,7 @@
                   // The list of all preloaded paths is attached to the response, for
                   // possible later use.
                   if (response.options.preloadPaths) {
-                    response.preloadedPaths = preloadElementPaths(containerElement);
+                    response.preloadedPaths = preloadPossiblePaths(containerElement);
                   }
 
                   // We must ensure we are scrolling to the page top,
