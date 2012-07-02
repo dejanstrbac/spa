@@ -344,7 +344,7 @@
         preloadImages = function(htmlText, numberOfImages) {
           // A bit of monkey business here. All images are replaced with
           // BR elements so external resources are not automatically loaded
-          // when jQuery attaches the html to the DOM for parsing.
+          // when jQuery attaches the html to the DOM tree for parsing.
           htmlText = htmlText.replace(/\<[iI][mM][gG]/g, '<br class="spa-image-preloading"');
 
           if (!$.isNumeric(numberOfImages)) {
@@ -680,7 +680,7 @@
       // array of object paths.
       //
       // If action property is ommited above, the app will assume it's called `handler`
-      // (from DEFAULT_ACTION_NAME). You can define as many routes as needed.
+      // (from `DEFAULT_ACTION_NAME`). You can define as many routes as needed.
       addRoutes: function(newRoutes) {
         $.merge(routes, newRoutes);
       },
