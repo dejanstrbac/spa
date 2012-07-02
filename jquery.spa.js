@@ -45,11 +45,6 @@
         // assumed. This makes sense when there is a single action controller.
     var DEFAULT_ACTION_NAME = 'handler',
 
-        // The default delay in milliseconds between requests for preloading
-        // images is defined here. If there are too many images and all requests
-        // are made at once, the app might be irresponsive, hence this timeout.
-        IMAGE_PRELOADING_DELAY = 50,
-
         // The limit of images to preload per render. Not all images are relevant
         // considering that the visitor sees only a part of the page.
         IMAGE_PRELOADING_LIMIT = 30,
@@ -340,6 +335,30 @@
         },
 
 
+        // Images of preloaded paths can also be preloaded before
+        // being shown. Since the visitor has a limited view into the
+        // page, a `numberOfImages` parameter can be passed to indicate
+        // an estimate of how many images are shown in the initial viewport,
+        // so bandwidth is preserved. If no parameter is passed,
+        // `IMAGE_PRELOADING_LIMIT` is assumed.
+        preloadImages = function(htmlText, numberOfImages) {
+          // A bit of monkey business here. All images are replaced with
+          // BR elements so external resources are not automatically loaded
+          // when jQuery attaches the html to the DOM for parsing.
+          htmlText = htmlText.replace(/\<img/g, '<br class="spa-image-preloading"');
+
+          if (!$.isNumeric(numberOfImages)) {
+            numberOfImages = IMAGE_PRELOADING_LIMIT;
+          }
+
+          $.each( $(htmlText).find('br.spa-image-preloading').slice(0, numberOfImages), function() {
+              var srcPath = $(this).attr('src');
+              $('<img/>')[0].src = srcPath;
+              spaLog('(spa) preloaded image: ' + srcPath);
+            });
+        },
+
+
         // SPA has ability to preload a spa path by calling the controller
         // action in the background and rendering its returned template for
         // memoization purposes. Once in memory, subsequent renderings of possible
@@ -349,8 +368,7 @@
           var preloadRoute       = getRouteFor(destinationPath),
               currentPath        = location.hash || '#!/',
               request            = null,
-              renderedView       = null,
-              preloadImagesLimit = null;
+              renderedView       = null;
 
           if (preloadRoute) {
             request = {
@@ -373,25 +391,15 @@
               response.options.template = getTemplateNameFor(request, response);
 
               renderedView = renderTemplate(response);
-              if (response.options.preloadImages) {
-                // Since images take most time to load, they can be preloaded along
-                // with the rendered template. However, they are queued so there are
-                // max ~10 images preloaded per second, up to a maximum of
-                // IMAGE_PRELOADING_LIMIT images in total per one path
-                if (!isNaN(parseFloat(response.options.preloadImages))
-                    && isFinite(response.options.preloadImages)) {
-                  preloadImagesLimit = response.options.preloadImages;
-                } else {
-                  preloadImagesLimit = IMAGE_PRELOADING_LIMIT;
-                }
 
-                $(renderedView).find('img').slice(0, preloadImagesLimit).each(function(i) {
-                  var imageSource = this.src;
-                  setTimeout(function(){
-                    spaLog('(spa) preloading image: ' + imageSource);
-                    $('<img/>')[0].src = imageSource;
-                  }, i * IMAGE_PRELOADING_DELAY);
-                });
+              // Since images take most time to load, they can be preloaded along
+              // with the rendered template. If property `options.preloadImages` is
+              // set to `true`, the `IMAGE_PRELOADING_LIMIT` will be assumed as number
+              // of images to load. Otherwise, if the property is numeric, that number
+              // will be used as a limit of images to preload for the controller
+              // action being preloaded.
+              if (response.options.preloadImages) {
+                preloadImages(renderedView, response.options.preloadImages);
               }
 
             }
@@ -581,27 +589,36 @@
       // is kept in one object and place.
       helpers: {
 
+        // In case a redirect is needed, this method can be called. The method
+        // will add the hash bang prefix on its own.
         redirectTo: function(hashPath, url) {
           redirectToPath(hashPath, url);
         },
 
+        // This is a simple method to check whether a template exists, without
+        // fetching its contents.
         existsTemplate: function(templateName) {
           return templatesMemo.hasOwnProperty(templateName);
         },
 
+        // If we need to use the template which was collected by SPA, its contents
+        // can be retrieved with this method.
         getTemplate: function(templateName) {
           if (templatesMemo.hasOwnProperty(templateName)) {
             return templatesMemo[templateName];
           }
         },
 
+        // Memoization is quite useful, and even though most of the responses and
+        // views are memoized, the mechanism can be useful for use in the custom
+        // controller actions and helpers.
         getMemoized: function(bucket, key, getterFunc, skipMemoize, conditionalFunc) {
           return memoize(bucket, key, getterFunc, skipMemoize, conditionalFunc);
         }
       },
 
 
-      // This method will selectively turn debug logging on or off.
+      // This method will selectively turn debug logging on or off at runtime.
       setDebug: function(value) {
         if (value !== 'undefined') {
           debugging = value;
