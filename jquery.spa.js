@@ -452,7 +452,9 @@
             if (!matchedRouteEntry) {
               // The route has not been recognized and we need to simulate a
               // 404 response. The 404 template can be defined just as any other.
-              renderTemplate({ options : { template: '404', cache: true } });
+              containerElement.empty().html(
+                renderTemplate({ options : { template: '404', cache: true } })
+              );
             } else {
               request = {
                 path           : currentPath,
@@ -529,7 +531,9 @@
                 // The route has been recognized, but the controller returned an
                 // empty response probably the object does not exist in the
                 // payload (like wrong id).
-                renderTemplate({ options : { template: '404', cache: true } });
+                containerElement.empty().html(
+                  renderTemplate({ options : { template: '404', cache: true } })
+                );
               }
 
               // Previous hash and exploded params out of it are kept
