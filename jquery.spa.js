@@ -345,7 +345,7 @@
           // A bit of monkey business here. All images are replaced with
           // BR elements so external resources are not automatically loaded
           // when jQuery attaches the html to the DOM for parsing.
-          htmlText = htmlText.replace(/\<img/g, '<br class="spa-image-preloading"');
+          htmlText = htmlText.replace(/\<[iI][mM][gG]/g, '<br class="spa-image-preloading"');
 
           if (!$.isNumeric(numberOfImages)) {
             numberOfImages = IMAGE_PRELOADING_LIMIT;
