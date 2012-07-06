@@ -42,19 +42,29 @@
 ;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
 
+        // Not all browsers support the onhashchange event. We must check,
+        // and if not supported fallback to the alternative solution of polling.
+        // The following check is taken from Modernizr.js: documentMode logic
+        // from YUI to filter out IE8 Compatibility Mode which gives false positives.
+    var hashChangeSupported = (function() {
+          return ('onhashchange' in window) &&
+                 (document.documentMode === undefined || document.documentMode > 7);
+        })(),
+
         // In the app routes, if there is no action defined, this one will be
         // assumed. This makes sense when there is a single action controller.
-    var DEFAULT_ACTION_NAME = 'handler',
+        DEFAULT_ACTION_NAME = 'handler',
 
 
         // The limit of images to preload per render. Not all images are relevant
         // considering that the visitor sees only a part of the page once it's
-        // rendered. The parameter can be defined per controller, in the
-        // options.preloadImages property.
+        // rendered. This parameter can be defined per controller, in the
+        // `options.preloadImages` property.
         PRELOAD_IMAGES_LIMIT = 30,
 
+
         // Preloading is based on a stack (LIFO) structure. The most relevant,
-        // newest paths are pushed onto the stack, and taken to bre preloaded on
+        // newest paths are pushed onto the stack, and taken to be preloaded on
         // interval basis.
         //
         // The delay for poping and preloading items from stack has a default
@@ -67,6 +77,7 @@
         // create too many preloading requests of low relevance.
         preloadStack            = [],
         preloadingIntervalId    = null,
+
 
         // The defaulting values for the preload stack should suffice in most cases.
         PRELOAD_STACK_POP_DELAY = 700,
@@ -103,8 +114,8 @@
         objectsMemo = {},
 
 
-        // There is quite a lot of stuff happening within SPA, although fairly
-        // simple. Having some logging in development mode might be helpful.
+        // There is quite a lot of stuff happening within SPA, although all
+        // fairly simple. Having some logging in development mode might be helpful.
         debugging = false,
 
 
@@ -118,12 +129,29 @@
 
 
         // SPA framework uses extensively memoization (caching) internally, as
-        // in catalog-like web apps, the likelyhood to browse back to a page is
+        // in catalog-like web apps the likelyhood to browse back to a page is
         // very high. the same mechanisms are opened for app use, by making this
-        // method public.
+        // method public in the return object below.
+        //
+        // The `bucket` argument is used for namespace of keys and semantical
+        // separation in the memory object. Mandatory along with `key`.
+        //
+        // The optional `getterFunc` argument can be exempt in case we just want
+        // to extract an existing memoized value.
+        //
+        // The optional `useMemo` argument is a boolean value which defaults to
+        // `true`, used to circumvent the memoization algorithm, and delete
+        // previously memoized value.
+        //
+        // The optional argument `conditionalFunc` is a conditional function
+        // which will accept the resulting value of the `getterFunc` as function
+        // argument. If `conditionalFunc` is passed and it returns `true`
+        // the returned `getterFunc` value will be memoized, otherwise the
+        // memoization will be circumvented.
         memoize = function(bucket, key, getterFunc, useMemo, conditionalFunc) {
           var getterFuncResult = null;
 
+          // If `useMemo` is not passed, we will still assume memoization.
           if (typeof useMemo === 'undefined') {
             useMemo = true;
           }
@@ -133,8 +161,7 @@
             // elements (e.g.) `[1,2]` into `"1,2"` which is again sufficient.
             key = key.toString();
 
-            // Buckets allow to separate key/values by semantical meaning of
-            // the values in the application.
+            // Buckets are canonical names used to separate namespaces for key/values.
             bucket = bucket.toString();
             if (!objectsMemo.hasOwnProperty(bucket)) {
               objectsMemo[bucket] = {};
@@ -178,11 +205,12 @@
 
         // SPA includes own simple dummy renderer. It can be redefined by calling
         // `setRenderer` which will override this method. If there is a problem,
-        // it should return either null or false.
+        // it should return either `null` or `false`.
         templateRenderer = function(template, data) {
-          for(var p in data) {
+          var p;
+          for(p in data) {
             if (data.hasOwnProperty(p)) {
-              template = template.replace( new RegExp('{{'+p+'}}','g'), data[p] );
+              template = template.replace(new RegExp('{{'+p+'}}','g'), data[p]);
             }
           }
           return template;
@@ -203,16 +231,6 @@
         },
 
 
-        // Not all browser support the onhashchange event. We must check
-        // and if not supported fallback to alternative solution of polling.
-        // The following check is taken from Modernizr.js: documentMode logic
-        // from YUI to filter out IE8 Compatibility Mode which gives false positives.
-        isHashChangeSupported = function() {
-          return ('onhashchange' in window) &&
-                 (document.documentMode === undefined || document.documentMode > 7);
-        },
-
-
         // Parsing of the the current location hash and splitting it in
         // REST-like parameters which are returned.
         getParams = function(str) {
@@ -222,9 +240,9 @@
               pair    = null;
           if (qs.match(/^\#\!/)) {
             qsArray = qs.substr(3).split('/');
-            while (qsArray.length != 0) {
+            while (qsArray.length !== 0) {
               pair = qsArray.splice(0, 2);
-              params[ pair[0] ] = pair[1];
+              params[pair[0]] = pair[1];
             }
           }
           return params;
@@ -235,12 +253,12 @@
         // the hash, and returning the route entry with all its content back.
         // SPA routes start with `#!` - (hash bang).
         getRouteFor = function(path) {
-          var currentRoute = null;
-          // We will first try matching the root route, as with highest priority.
+          var currentRoute = null, i, l;
+          // We will first try matching the `root route`, as with highest priority.
           if (path.match(/^$|^#(?!\!).+/)) {
             currentRoute = routes.slice(-1)[0];
           } else if (path.match(/^\#\!.+/)) {
-            for (var i = 0; (i < routes.length) && !currentRoute; i+=1) {
+            for (i=0, l=routes.length; (i < l) && !currentRoute; i+=1) {
               if (RegExp(routes[i].url).test(path.slice(2))) {
                 currentRoute = routes[i];
               }
@@ -311,9 +329,9 @@
         // removal is done before setting so that the possible events are
         // cleared, hopefully preventing memory leaks.
         renderTemplate = function(response) {
-          var template      = memoize('spa__templates', response.options.template),
-              renderedView  = null,
-              cacheKey      = null ;
+          var template     = memoize('spa__templates', response.options.template),
+              renderedView = null,
+              cacheKey     = null;
 
           response.data    = response.data    || {};
           response.options = response.options || {};
@@ -354,7 +372,7 @@
 
         // Images of preloaded paths can also be preloaded before
         // being shown. Since the visitor has a limited view into the
-        // page, a `numberOfImages` parameter can be passed to indicate
+        // page, a `numberOfImages` argument can be passed to indicate
         // an estimate of how many images are shown in the initial viewport,
         // so bandwidth is preserved. If no parameter is passed,
         // `PRELOAD_IMAGES_LIMIT` is assumed.
@@ -363,9 +381,9 @@
           // BR elements so external resources are not automatically loaded
           // when jQuery attaches the html text to the DOM tree for parsing.
           //
-          // If image had own class tag, it will be ignored as new class is
-          // injected as first class definition. The modified template is only
-          // for image extraction purposes and is not saved or displayed.
+          // If image had own class tag, it would be ignored as new class is
+          // injected as first definition. The modified template is only for
+          // image extraction purposes and is not saved or displayed.
           htmlText = htmlText.replace(/\<[iI][mM][gG]/g,
                       '<br class="spa-image-preloading"');
 
@@ -390,10 +408,10 @@
         // next paths would only call callbacks, making the response time even
         // shorter.
         preloadPath = function(destinationPath) {
-          var preloadRoute       = getRouteFor(destinationPath),
-              currentPath        = location.hash || '#!/',
-              request            = null,
-              renderedView       = null;
+          var preloadRoute = getRouteFor(destinationPath),
+              currentPath  = location.hash || '#!/',
+              request      = null,
+              renderedView = null;
 
           if (preloadRoute) {
             request = {
@@ -477,7 +495,9 @@
           if (preloadStack.length) {
             nextPath = preloadStack.pop();
             if (nextPath) {
-              spaLog('preload stack pop (' + preloadStack.length + ' left): ' + nextPath);
+              spaLog('\n ~~~ \npreload stack pop (' +
+                     preloadStack.length +
+                     '): ' + nextPath);
               preloadPath(nextPath);
             }
           } else {
@@ -623,10 +643,6 @@
               // The handler of the route is finishing and polling is allowed
               // again - influences only older browsers.
               pollingAllowed = true;
-
-              // The route has finished execution, logs need to be visually
-              // separated here for readability.
-              spaLog('route handled\n\n\n');
             }
           }
         },
@@ -636,7 +652,7 @@
         // hash path, so the SPA app jumps to the desired state - as in the
         // case of copy/pasting a whole url.
         startRouter = function() {
-          if (isHashChangeSupported()) {
+          if (hashChangeSupported) {
             $(window).bind('hashchange', router);
           } else {
             setInterval(router, pollingInterval);
