@@ -42,7 +42,7 @@
 ;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
 
-        // Not all browsers support the onhashchange event. We must check,
+        // Not all browsers support the `onhashchange` event. We must check,
         // and if not supported fallback to the alternative solution of polling.
         // The following check is taken from Modernizr.js: documentMode logic
         // from YUI to filter out IE8 Compatibility Mode which gives false positives.
