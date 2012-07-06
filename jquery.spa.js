@@ -600,16 +600,17 @@
                   // unnecessarily preloaded twice, as web pages normally repeat same links
                   // across pages.
                   if (response.options.preloadPaths) {
-                    response.preloadedPaths = memoize('spa__preloaded_paths', request.path, function() {
-                      var responsePaths = preloadContainerPaths(containerElement);
-                      if (!preloadingIntervalId) {
-                        preloadingIntervalId = setInterval(
-                          function() { emptyPreloadStack(request, response); },
-                          response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY
-                        );
-                      }
-                      return responsePaths;
-                    });
+                    response.preloadedPaths = memoize('spa__preloaded_paths', request.path,
+                      function() {
+                        var responsePaths = preloadContainerPaths(containerElement);
+                        if (!preloadingIntervalId) {
+                          preloadingIntervalId = setInterval(
+                            function() { emptyPreloadStack(request, response); },
+                            response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY
+                          );
+                        }
+                        return responsePaths;
+                      });
                   }
 
                   // We must ensure we are scrolling to the page top,
