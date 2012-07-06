@@ -41,13 +41,36 @@
 
 ;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
+
         // In the app routes, if there is no action defined, this one will be
         // assumed. This makes sense when there is a single action controller.
     var DEFAULT_ACTION_NAME = 'handler',
 
+
         // The limit of images to preload per render. Not all images are relevant
-        // considering that the visitor sees only a part of the page.
-        IMAGE_PRELOADING_LIMIT = 30,
+        // considering that the visitor sees only a part of the page once it's
+        // rendered. The parameter can be defined per controller, in the
+        // options.preloadImages property.
+        PRELOAD_IMAGES_LIMIT = 30,
+
+        // Preloading is based on a stack (LIFO) structure. The most relevant,
+        // newest paths are pushed onto the stack, and taken to bre preloaded on
+        // interval basis.
+        //
+        // The delay for poping and preloading items from stack has a default
+        // value, but it can be altered per controller by defining the property
+        // `options.preloadStackDelay`. The limitation is that if different
+        // controllers have different delays set, the new delay will not take
+        // effect until the stack is emptied.
+        //
+        // The preload stack is of limited size, so browsing around would not
+        // create too many preloading requests of low relevance.
+        preloadStack            = [],
+        preloadingIntervalId    = null,
+
+        // The defaulting values for the preload stack should suffice in most cases.
+        PRELOAD_STACK_POP_DELAY = 700,
+        PRELOAD_STACK_MAX_SIZE  = 20,
 
 
         // Start by memoizing the container element. By attaching to the container,
@@ -75,12 +98,6 @@
         callbacks   = {},
 
 
-        // All templates are stored in memory so no repetitive DOM access is needed.
-        templatesMemo = {
-          '404': '<h1>404 Page not found</h1>'
-        },
-
-
         // Helper memo for aiding memoization in helpers and controllers,
         // so extraction from payload is optimized.
         objectsMemo = {},
@@ -95,7 +112,7 @@
         // throughout the spa application.
         spaLog = function(msg) {
           if (debugging) {
-            console.log(msg);
+            console.log('(spa) ' + msg);
           }
         },
 
@@ -104,16 +121,16 @@
         // in catalog-like web apps, the likelyhood to browse back to a page is
         // very high. the same mechanisms are opened for app use, by making this
         // method public.
-        memoize = function(bucket, key, getterFunc, skipMemoize, conditionalFunc) {
+        memoize = function(bucket, key, getterFunc, useMemo, conditionalFunc) {
           var getterFuncResult = null;
 
-          if (typeof skipMemoize === 'undefined') {
-            skipMemoize = true;
+          if (typeof useMemo === 'undefined') {
+            useMemo = true;
           }
 
-          if (skipMemoize) {
+          if (useMemo) {
             // If the given key is an Array, casting to string will join its
-            // elements (e.g.) `[1,2]` into `"1,2"` which is again sufficient for the key.
+            // elements (e.g.) `[1,2]` into `"1,2"` which is again sufficient.
             key = key.toString();
 
             // Buckets allow to separate key/values by semantical meaning of
@@ -126,7 +143,7 @@
             // Simply check if the memo key is defined on the bucket.
             // Set it if it does not, otherwise just return it.
             if (!objectsMemo[bucket].hasOwnProperty(key)) {
-              spaLog('(spa) mem miss: ' + bucket + '[' + key + ']');
+              spaLog('mem miss: ' + bucket + '[' + key + ']');
               if (getterFunc) {
                 getterFuncResult = getterFunc(key);
                 // If a `conditionalFunc` function is passed, the response from
@@ -140,7 +157,7 @@
                 return getterFuncResult;
               }
             } else {
-              spaLog('(spa) mem hit: ' + bucket + '[' + key + ']');
+              spaLog('mem hit: ' + bucket + '[' + key + ']');
               return objectsMemo[bucket][key];
             }
           } else {
@@ -178,7 +195,7 @@
         // a redirect option (see below).
         redirectToPath = function(destinationHashPath, url) {
           if (typeof url === 'undefined') {
-            spaLog('(spa) redirecting page: ' + destinationHashPath);
+            spaLog('redirecting page: ' + destinationHashPath);
             location.hash = '#!' + destinationHashPath;
           } else {
             location = url + (destinationHashPath || '');
@@ -258,11 +275,11 @@
         runCallbacks = function(callbackName, request, response) {
           if (controllers[request.controller][callbackName]) {
             (controllers[request.controller][callbackName])(request, response);
-            spaLog('(spa) callback ' + request.controller + '.' + callbackName + '()');
+            spaLog('callback ' + request.controller + '.' + callbackName + '()');
           }
           if (callbacks[callbackName]) {
             (callbacks[callbackName])(request);
-            spaLog('(spa) callback ' + callbackName + '()');
+            spaLog('callback ' + callbackName + '()');
           }
         },
 
@@ -291,10 +308,10 @@
         // Rendering, wrapping and setting of the template into the defined
         // application container. Wrapping is done so that the effort of
         // insertion as well deletion is minimal on the DOM. At the same time,
-        // removal is done before setting so that the possible events are cleared,
-        // preventing memory leaks.
+        // removal is done before setting so that the possible events are
+        // cleared, hopefully preventing memory leaks.
         renderTemplate = function(response) {
-          var template      = templatesMemo[response.options.template],
+          var template      = memoize('spa__templates', response.options.template),
               renderedView  = null,
               cacheKey      = null ;
 
@@ -324,10 +341,10 @@
               if (tmpView) {
                 return '<div id="spa__wrap">' + tmpView + '</div>';
               } else {
-                throw new Error('(spa) template could not be rendered >> ' + response.options.template);
+                throw new Error('template could not be rendered >> ' + response.options.template);
               }
             } else {
-              throw new Error('(spa) template does not exist >> ' + response.options.template);
+              throw new Error('template does not exist >> ' + response.options.template);
             }
           }, (cacheKey !== null));
 
@@ -340,26 +357,34 @@
         // page, a `numberOfImages` parameter can be passed to indicate
         // an estimate of how many images are shown in the initial viewport,
         // so bandwidth is preserved. If no parameter is passed,
-        // `IMAGE_PRELOADING_LIMIT` is assumed.
-        preloadImages = function(htmlText, numberOfImages) {
+        // `PRELOAD_IMAGES_LIMIT` is assumed.
+        preloadViewImages = function(htmlText, numberOfImages) {
           // A bit of monkey business here. All images are replaced with
           // BR elements so external resources are not automatically loaded
-          // when jQuery attaches the html to the DOM tree for parsing.
-          htmlText = htmlText.replace(/\<[iI][mM][gG]/g, '<br class="spa-image-preloading"');
+          // when jQuery attaches the html text to the DOM tree for parsing.
+          //
+          // If image had own class tag, it will be ignored as new class is
+          // injected as first class definition. The modified template is only
+          // for image extraction purposes and is not saved or displayed.
+          htmlText = htmlText.replace(/\<[iI][mM][gG]/g,
+                      '<br class="spa-image-preloading"');
 
           if (!$.isNumeric(numberOfImages)) {
-            numberOfImages = IMAGE_PRELOADING_LIMIT;
+            numberOfImages = PRELOAD_IMAGES_LIMIT;
           }
 
-          $.each( $(htmlText).find('br.spa-image-preloading').slice(0, numberOfImages), function() {
-              var srcPath = $(this).attr('src');
-              $('<img/>')[0].src = srcPath;
-              spaLog('(spa) preloaded image: ' + srcPath);
-            });
+          $.each(
+            $(htmlText).find('br.spa-image-preloading').slice(0, numberOfImages),
+              function() {
+                var srcPath = $(this).attr('src');
+                $('<img/>')[0].src = srcPath;
+                spaLog('preload image: ' + srcPath);
+              }
+          );
         },
 
 
-        // SPA has ability to preload a spa path by calling the controller
+        // SPA has ability to preload a path by calling the controller
         // action in the background and rendering its returned template for
         // memoization purposes. Once in memory, subsequent renderings of possible
         // next paths would only call callbacks, making the response time even
@@ -388,45 +413,85 @@
             // into the container. Renderer is being called only to memoize the
             // response which is here used only to further preloading.
             if (!response.options.renderNothing) {
-              response.options.template = getTemplateNameFor(request, response);
 
+              response.options.template = getTemplateNameFor(request, response);
               renderedView = renderTemplate(response);
 
               // Since images take most time to load, they can be preloaded along
               // with the rendered template. If property `options.preloadImages` is
-              // set to `true`, the `IMAGE_PRELOADING_LIMIT` will be assumed as number
+              // set to `true`, the `PRELOAD_IMAGES_LIMIT` will be assumed as number
               // of images to load. Otherwise, if the property is numeric, that number
               // will be used as a limit of images to preload for the controller
               // action being preloaded.
               if (response.options.preloadImages) {
-                preloadImages(renderedView, response.options.preloadImages);
+                preloadViewImages(renderedView, response.options.preloadImages);
               }
 
             }
-            spaLog('(spa) preloaded path: ' + destinationPath);
+            spaLog('preload path done: ' + destinationPath);
           }
         },
 
 
         // This method will determine all unique paths which look are SPA-like
         // in the passed container element, starting with a hash bang and their
-        // respective anchors not having class `.spa-no-preload`. For the collected
-        // paths, `preloadPath` method will be called to memoize controller actions
-        // and rendered templates. The method will return all preloaded paths in
-        // case they are needed in the controller.
-        preloadPossiblePaths = function(el) {
-          var preloadedPaths = [];
-          el.find('a').each(function() {
+        // respective anchors not having class `.spa-no-preload`. The paths will
+        // be pushed onto the preload stack from where they will be preloaded one
+        // by one in non-blocking intervals.
+        //
+        // This method will return all preloaded paths in case they are
+        // needed in the controller or further callbacks.
+        preloadContainerPaths = function(container) {
+          var containerPaths = [];
+          container.find('a').each(function() {
             var nextPath = $(this).attr('href');
-            if (nextPath &&
-                !$(this).hasClass('.spa-no-preload') &&
-                (nextPath.lastIndexOf('#!/', 0) === 0) &&
-                ($.inArray(nextPath, preloadedPaths) === -1)) {
-              preloadPath(nextPath);
-              preloadedPaths.push(nextPath);
+            if (nextPath && (!$(this).hasClass('.spa-no-preload')) &&
+                 (nextPath.lastIndexOf('#!/', 0) === 0) &&
+                   ($.inArray(nextPath, containerPaths) === -1)) {
+
+              preloadStack.push(nextPath);
+
+              // If the maximum size of the preload stack is exceeded, the
+              // stack will drop the oldest paths in it to make space for the new
+              // more relevant ones.
+              if (preloadStack.length > PRELOAD_STACK_MAX_SIZE) {
+                preloadStack.shift();
+              }
+
+              containerPaths.push(nextPath);
             }
           });
-          return preloadedPaths;
+          return containerPaths;
+        },
+
+
+        // Javascript applications are executed as a single process. Preloading
+        // the whole content at once would make the app irresponsive. Therefore
+        // we make use of the LIFO preloading stack. It gets activated via
+        // controller response that requests preloading, and it works until it
+        // gets emptied. Items are popped from the stack in intervals, with a
+        // delay that can also be set in the options property of the controller
+        // response or defaults to `PRELOAD_STACK_POP_DELAY`.
+        emptyPreloadStack = function (request, response) {
+          var nextPath = null;
+          if (preloadStack.length) {
+            nextPath = preloadStack.pop();
+            if (nextPath) {
+              spaLog('preload stack pop (' + preloadStack.length + ' left): ' + nextPath);
+              preloadPath(nextPath);
+            }
+          } else {
+            // The preload stack has been emptied and the interval needs to be
+            // cancelled and cleared, so further preload responses can activate
+            // it again.
+            spaLog('preload stack empty')
+            clearInterval(preloadingIntervalId);
+            preloadingIntervalId = null;
+
+            // When preloading is done, the `afterPreload` callback is called,
+            // for possible application hooks e.g. loading completed.
+            runCallbacks('afterPreload', request, response);
+          }
         },
 
 
@@ -441,7 +506,6 @@
               response          = null;
 
           if (pollingAllowed && (currentPath !== previousPath)) {
-
             // In case of older browsers (IE6/7), where we use hash polling instead
             // of hash change events, polling needs to be terminated when we are
             // still on the same page, so unneccessary continous calls to the same
@@ -485,7 +549,7 @@
                 // Some controller actions have no need of a rendered response.
                 // Those can be popups for instance, triggered by hash changes.
                 if (response.options.renderNothing) {
-                  spaLog('(spa) template bypassed');
+                  spaLog('template bypassed');
                 } else {
                   // The `beforeRender` callback might be useful for cleaning up the
                   // previous view or detaching some events.
@@ -503,13 +567,27 @@
                   // should be attached to the newly rendered html.
                   runCallbacks('afterRender', request, response);
 
-                  // If the `preloadPaths` property is specified in the controller response
+                  // If the `preloadPaths` property is specified in the controller response,
                   // we will preload all paths in the rendered container, by memoizing the
-                  // controller responses as well the rendered templates, but without callbacks.
+                  // controller responses as well the rendered templates - but without callbacks.
+                  //
                   // The list of all preloaded paths is attached to the response, for
-                  // possible later use.
+                  // possible later use in the application via e.g. callback.
+                  //
+                  // Paths that trigger preloading of own links are memoized so thay are not
+                  // unnecessarily preloaded twice, as web pages normally repeat same links
+                  // across pages.
                   if (response.options.preloadPaths) {
-                    response.preloadedPaths = preloadPossiblePaths(containerElement);
+                    response.preloadedPaths = memoize('spa__preloaded_paths', request.path, function() {
+                      var responsePaths = preloadContainerPaths(containerElement);
+                      if (!preloadingIntervalId) {
+                        preloadingIntervalId = setInterval(
+                          function() { emptyPreloadStack(request, response); },
+                          response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY
+                        );
+                      }
+                      return responsePaths;
+                    });
                   }
 
                   // We must ensure we are scrolling to the page top,
@@ -545,6 +623,10 @@
               // The handler of the route is finishing and polling is allowed
               // again - influences only older browsers.
               pollingAllowed = true;
+
+              // The route has finished execution, logs need to be visually
+              // separated here for readability.
+              spaLog('route handled\n\n\n');
             }
           }
         },
@@ -566,19 +648,21 @@
     // Ensure there is a container of jQuery object / DOM element
     // to work with as a SPA. The rendering of pages will happen there.
     if (!containerElement.length) {
-      throw new Error('(spa) container does not exist');
+      throw new Error('container does not exist');
     }
 
-    // Views templates are fetched at initialization time and memoized into the
-    // `templatesMemo` object from where they will be used instead from the DOM.
-    $("script[type='text/html']").map( function(i, el) {
+    // Views templates are fetched at initialization time and memoized as
+    // they will be often called, so no repetitive DOM access is needed.
+    $("script[type='text/html']").map(function(i, el) {
       var templateEl   = $(el),
           templateName = templateEl.attr('id');
 
       if (templateName.substr(0,5) === 'spa__') {
         templateName = templateName.substring(5);
       }
-      templatesMemo[templateName] = templateEl.html();
+      memoize('spa__templates', templateName, function() {
+        return templateEl.html();
+      });
     });
 
 
@@ -593,24 +677,10 @@
       // is kept in one object and place.
       helpers: {
 
-        // In case a redirect is needed, this method can be called. The method
-        // will add the hash bang prefix on its own.
-        redirectTo: function(hashPath, url) {
-          redirectToPath(hashPath, url);
-        },
-
-        // This is a simple method to check whether a template exists, without
-        // fetching its contents.
-        existsTemplate: function(templateName) {
-          return templatesMemo.hasOwnProperty(templateName);
-        },
-
-        // If we need to use the template which was collected by SPA, its contents
-        // can be retrieved with this method.
+        // If we need to use the template which was collected by SPA, its
+        // contents can be retrieved with this method.
         getTemplate: function(templateName) {
-          if (templatesMemo.hasOwnProperty(templateName)) {
-            return templatesMemo[templateName];
-          }
+          return memoize('spa__templates', templateName);
         },
 
         // Memoization is quite useful, and even though most of the responses and
