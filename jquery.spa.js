@@ -42,11 +42,13 @@
 ;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
 
+   var  SPA_VERSION = 2.04,
+
         // Not all browsers support the `onhashchange` event. We must check,
         // and if not supported fallback to the alternative solution of polling.
         // The following check is taken from Modernizr.js: documentMode logic
         // from YUI to filter out IE8 Compatibility Mode which gives false positives.
-    var hashChangeSupported = (function() {
+        hashChangeSupported = (function() {
           return ('onhashchange' in window) &&
                  (document.documentMode === undefined || document.documentMode > 7);
         })(),
@@ -713,7 +715,9 @@
         if (value !== 'undefined') {
           debugging = value;
         }
-        spaLog('debug mode enabled');
+        spaLog('jQuery SPA (Single Page App) framework v' + SPA_VERSION);
+        spaLog('https://github.com/dejanstrbac/spa\n\n');
+        spaLog('Debug mode enabled');
       },
 
 
