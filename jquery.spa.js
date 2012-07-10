@@ -279,7 +279,9 @@
           }, true, function(response) {
             // Conditional memoization function, will return true if property
             // `options.cache` is not `undefined`, `0`, `null`, or `''`.
-            return !!response.options.cache;
+            return response &&
+                     response.hasOwnProperty('options') &&
+                       !!response.options.cache;
           });
         },
 
@@ -361,10 +363,10 @@
               if (tmpView) {
                 return '<div id="spa__wrap">' + tmpView + '</div>';
               } else {
-                throw new Error('template could not be rendered >> ' + response.options.template);
+                throw new Error('template error >> ' + response.options.template);
               }
             } else {
-              throw new Error('template does not exist >> ' + response.options.template);
+              throw new Error('template not found >> ' + response.options.template);
             }
           }, (cacheKey !== null));
 
