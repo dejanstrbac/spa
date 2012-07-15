@@ -508,7 +508,7 @@
             // The preload stack has been emptied and the interval needs to be
             // cancelled and cleared, so further preload responses can activate
             // it again.
-            spaLog('preload stack empty')
+            spaLog('preload stack empty');
             clearInterval(preloadingIntervalId);
             preloadingIntervalId = null;
 
@@ -540,9 +540,9 @@
             if (!matchedRouteEntry) {
               // The route has not been recognized and we need to simulate a
               // 404 response. The 404 template can be defined just as any other.
-              containerElement.empty().html(
-                renderTemplate({ options : { template: '404', cache: true } })
-              );
+              containerElement.empty().html(renderTemplate({
+                options : { template: '404', cache: true }
+              }));
             } else {
               request = {
                 path           : currentPath,
@@ -608,8 +608,7 @@
                         if (!preloadingIntervalId) {
                           preloadingIntervalId = setInterval(
                             function() { emptyPreloadStack(request, response); },
-                            response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY
-                          );
+                            response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY);
                         }
                         return responsePaths;
                       });
@@ -634,9 +633,9 @@
                 // The route has been recognized, but the controller returned an
                 // empty response probably the object does not exist in the
                 // payload (like wrong id).
-                containerElement.empty().html(
-                  renderTemplate({ options : { template: '404', cache: true } })
-                );
+                containerElement.empty().html(renderTemplate({
+                  options : { template: '404', cache: true }
+                }));
               }
 
               // Previous hash and exploded params out of it are kept
