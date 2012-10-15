@@ -126,8 +126,20 @@
         debugging = false,
         
 
-        // An indicator whether we are running or not.
+        // A simple indicator whether application is running or not.
         running = false,
+
+
+        // Method to extract hash paths from the url. IE returns "#" when there
+        // is nothing in front of the hash, while other browsers return null 
+        // in this situation.
+        getHash = function() {
+          if (location.hash && (location.hash !== '#')) {
+            return location.hash;
+          } else {
+            return '#!/';
+          }
+        },
 
 
         // Non-destructive method overriding, used for extending callbacks, helpers
@@ -155,7 +167,7 @@
         // Simple conditional internal logging method to analyze the flow
         // throughout the spa application.
         spaLog = function(msg) {
-          if (debugging && typeof console != "undefined" && console.log) {
+          if (debugging && (typeof console != "undefined") && console.log) {
             console.log('(spa) ' + msg);
           }
         },
@@ -332,6 +344,8 @@
         //
         // Controller callbacks have higher priority than the app ones as they
         // are closer to the logic code.
+        // 
+        // Note that response may be ommited in some cases such as `beforeFilter`.
         runCallbacks = function(callbackName, request, response) {
           if (controllers[request.controller][callbackName]) {
             controllers[request.controller][callbackName].call(this, request, response);
@@ -451,8 +465,7 @@
         // shorter.
         preloadPath = function(destinationPath) {
           var preloadRoute = getRouteFor(destinationPath),
-              // IE returns "#" when there is nothing in front of the hash. The other browsers return null in this situation
-              currentPath  = (location.hash && "#" != location.hash) ? location.hash : '#!/', 
+              currentPath  = getHash(),
               request      = null,
               renderedView = null;
 
@@ -538,16 +551,14 @@
           if (preloadStack.length) {
             nextPath = preloadStack.pop();
             if (nextPath) {
-              spaLog('\n ~~~ \npreload stack pop (' +
-                     preloadStack.length +
-                     '): ' + nextPath);
+              spaLog('\n ~~~ \npreload stack pop (' + preloadStack.length + '): ' + nextPath);
               preloadPath(nextPath);
             }
           } else {
             // The preload stack has been emptied and the interval needs to be
             // cancelled and cleared, so further preload responses can activate
             // it again.
-            spaLog('preload stack empty')
+            spaLog('preload stack empty');
             clearInterval(preloadingIntervalId);
             preloadingIntervalId = null;
 
@@ -562,7 +573,7 @@
         // compared to predefined routes. Matching controller/action is then
         // called and passed parameters found in the hash.
         router = function() {
-          var currentPath  = (location.hash && "#" != location.hash) ? location.hash : '#!/', // IE returns "#" when there is nothing in front of the hash. The other browsers return null in this situation
+          var currentPath       = getHash(),
               pollingAllowed    = true,
               matchedRouteEntry = null,
               request           = null,
@@ -580,8 +591,7 @@
               // The route has not been recognized and we need to simulate a
               // 404 response. The 404 template can be defined just as any other.
               containerElement.empty().html(
-                renderTemplate({ options : { template: '404', cache: true } })
-              );
+                renderTemplate({ options : { template: '404', cache: true } }));
             } else {
               request = {
                 path           : currentPath,
@@ -647,8 +657,7 @@
                         if (!preloadingIntervalId) {
                           preloadingIntervalId = setInterval(
                             function() { emptyPreloadStack(request, response); },
-                            response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY
-                          );
+                            response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY);
                         }
                         return responsePaths;
                       });
