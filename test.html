@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SPA Test Page</title>  
+    <style type="text/css">
+      table { width: 100%; border-collapse:collapse; }
+      table tr th { text-align: left; }      
+      table tr.true { background-color: #afa; }
+      table tr.false { background-color: #faa; }
+    </style>
+
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script type="text/javascript" src="http://raw.github.com/janl/mustache.js/master/mustache.js"></script>    
+    <script type="text/javascript" src="jquery.spa.js"></script>
+
+    <!-- the main template, listing test results -->
+    <script type="text/html" id="spa__tests__index">
+      <h1>SPA Tests</h1>
+      <p>
+        These are simple tests for development purposes. 
+        <br/>
+        The page is constructed and rendered with SPA. 
+        It is normal to see red flashes.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Id</th><th>Description</th><th>Result</th></tr>
+        </thead>
+        {{#tests}}
+        <tr class="{{result}}"><td>#{{id}}</td><td>{{name}}</td><td>{{#result}}ok{{/result}}{{^result}}fail{{/result}}</td></tr>
+        {{/tests}}
+      </table>
+    </script>
+
+    <!-- The 404 page, please do not change, content lookup is done-->
+    <script type="text/html" id="spa__404">404</script>
+  </head>
+
+  <body>
+    <!-- this is the main content area where templates get rendered -->
+    <div id="spa_main">
+      Main content area that will be replaced
+    </div>
+
+    <!-- 
+        tests for SPA are written in SPA, it gets really curly down there,
+        trying several use cases and asserting results. What follows is not
+        a way how to write SPA apps, but an extreme push of core features,
+        with additional raping through overriding.
+      -->
+    <script type="text/javascript">
+      var spaApp,
+          timer         = null,   // for testing timed actions, one shot only
+          hashTest      = false,  // this global will check flows through hash changes
+          callbacksTest = '',     // we'll capture the order of callbacks here
+          not_found     = null;   // for testing 404 page
+
+      $(function() {
+        spaApp = $('#spa_main').spa();
+
+        spaApp.addHelpers({
+
+          simpleValue: function() {
+            return 'irrelevant';
+          },
+
+          getTests: function () {
+            return {
+              tests: [
+                { 
+                  id: 0, 
+                  name: "debug mode (check console)", 
+                  result: (function() { 
+                    return spaApp.setDebug(true); 
+                  })()
+                },
+
+
+                { 
+                  id: 1, 
+                  name: "loading, run, repetitive run", 
+                  result: (function() { 
+                    return spaApp.isRunning() && !spaApp.run(); 
+                  })()
+                },
+
+
+                {
+                  id: 2, 
+                  name: "templates", 
+                  result: (function() { 
+                    return ((typeof spaApp.helpers.getTemplate('tests__index') === 'string') &&
+                            (typeof spaApp.helpers.getTemplate('tests__nonexisting') === 'undefined'));
+                  })()
+                },
+
+
+                {
+                  id: 3, 
+                  name: "memoization, conditional value, conditional method", 
+                  result: (function() { 
+                    var result     = false, 
+                        testerFunc = function(useMemo, condFunc) {                          
+                          return spaApp.helpers.getMemoized('test', 'memoization', 
+                            function() { 
+                              result = !result; 
+                              return result; 
+                            }, 
+                            useMemo, condFunc);
+                        };
+
+                    return testerFunc() && testerFunc() && testerFunc() && 
+                           !testerFunc(false) && testerFunc(false) && !testerFunc(false) &&
+                           testerFunc(true, function(){ return false; }) &&
+                           !testerFunc(true, function(){ return false; });
+                  })()
+                },
+
+
+                {
+                  id: 4, 
+                  name: "hash listeners, routing, redirection, rendering, rendering nothing", 
+                  result: hashTest
+                },
+
+
+                {
+                  id: 5, 
+                  name: "callbacks, order, overriding",                  
+                  result: (callbacksTest === "<bfBF><afAF><brBR><arAR><bfBF><afAF><bfBF><afAF><brBR><arAR><bfBF>")
+                },                             
+
+
+                { id: 6,
+                  name: "defaul renderer, change, custom renderer with mustache, iteration",
+                  result: (function() {
+                    var basicRenderer = (spaApp.helpers.render("test") === "test") &&
+                                        (spaApp.helpers.render("test-{{v}}", {v:'ok'}) === "test-ok");
+
+                    spaApp.setRenderer(function(template, data, templates) {
+                      return Mustache.render(template, data, templates);
+                    });
+
+                    return basicRenderer && (spaApp.helpers.render("test") === "test") &&
+                           (spaApp.helpers.render("test-{{v}}", {v:'ok'}) === "test-ok") &&
+                           (spaApp.helpers.render("{{#a}}{{i}}{{/a}}", {a:[{i:1},{i:2}]}) === "12");
+                  })()
+                },
+                
+
+                {
+                  id: 7,
+                  name: "helper, helper override test",
+                  result: function() {
+                    spaApp.addHelpers({
+                      simpleValue: function() { return "test"; }
+                    });
+                    return (spaApp.helpers.simpleValue() === "test");
+                  }
+                },
+
+
+                {
+                  id: 8, 
+                  name: "404 page, rendering, container contents, browsing",                  
+                  result: not_found
+                },                             
+
+              ]
+            };
+          }
+        });
+
+
+
+        spaApp.addControllers({
+          tests: {
+
+            beforeFilter: function(request){
+              callbacksTest += '<bf';
+            },
+
+            afterFilter: function(request, response){
+              callbacksTest += '<af';
+            },
+
+            beforeRender: function(request, response){
+              callbacksTest += '<br';
+            },
+
+            afterRender: function(request, response){
+              callbacksTest += '<ar';
+            },
+
+            index: function(request) {              
+              if (timer === null) {
+                timer = setTimeout(function(){ 
+                          spaApp.helpers.redirectTo('/hashtest');
+                          setTimeout(function(){
+                            spaApp.helpers.redirectTo('/unknown');                              
+                              setTimeout(function(){              
+                                not_found = ($('#spa_main').text() === '404');                  
+                                spaApp.helpers.redirectTo('/');
+                              }, 200);
+                          }, 200);
+                        }, 200);
+              }
+              return {
+                data: spaApp.helpers.getTests(),
+                options: {
+                  // caching of the data response must be disabled so we can
+                  // refresh the page for some tests that require a page bounce.
+                  cache: false
+                }
+              };
+            },
+
+            hashtest: function(request) {
+              hashTest = true;
+              return {
+                options: {
+                  renderNothing: true,
+                  redirectTo: '/'
+                }
+              };
+            }
+          }
+        });
+
+        
+        // we will attach some callbacks and test their order of execution
+        // as compared to the overriden ones, and the ones in the controller.
+        spaApp.addCallbacks({
+          beforeFilter: function(request) {
+            callbacksTest += '>';
+          },
+          afterFilter: function(request, response) {
+            callbacksTest += '>';
+
+          },
+
+          beforeRender: function(request, response) {
+            callbacksTest += '>';            
+          },
+
+          afterRender: function(request, response) {
+            callbacksTest += '>';
+          }
+        });
+
+
+        // Override a callback, will execute before the one above, adding
+        // one character in front, to be equal to the others.    
+        spaApp.addCallbacks({
+          beforeFilter: function(request) {
+            callbacksTest += 'BF';            
+          },
+
+          afterFilter: function(request, response) {
+            callbacksTest += 'AF';
+          },
+
+          beforeRender: function(request, response) {
+            callbacksTest += 'BR';
+          },
+
+          afterRender: function(request, response) {
+            callbacksTest += 'AR';
+          }
+        });
+
+
+
+        spaApp.addRoutes([
+          { url: '^/hashtest$', controller: 'tests', action: 'hashtest' },
+          { url: '^/?$',        controller: 'tests', action: 'index' }
+        ]);
+
+        spaApp.run();
+      });
+    </script>
+
+  </body>
+</html>

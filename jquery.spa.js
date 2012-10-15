@@ -42,7 +42,7 @@
 ;(function( $ ) {
   $.fn.spa = $.fn.spa || function() {
 
-   var  SPA_VERSION = 2.04,
+   var  SPA_VERSION = 2.10,
 
         // Not all browsers support the `onhashchange` event. We must check,
         // and if not supported fallback to the alternative solution of polling.
@@ -111,6 +111,11 @@
         callbacks   = {},
 
 
+        // SPA includes a basic template renderer, but it is recommended to 
+        // overrided it with something more powerful like Mustache engine.
+        customRenderer = null,
+
+
         // Helper memo for aiding memoization in helpers and controllers,
         // so extraction from payload is optimized.
         objectsMemo = {},
@@ -119,12 +124,38 @@
         // There is quite a lot of stuff happening within SPA, although all
         // fairly simple. Having some logging in development mode might be helpful.
         debugging = false,
+        
+
+        // An indicator whether we are running or not.
+        running = false,
+
+
+        // Non-destructive method overriding, used for extending callbacks, helpers
+        // and controller objects. The methods are chained, the new one taking place
+        // before the old one.
+        extendMethods = function(oldMethods, newMethods) {
+          for (var m in newMethods) {
+            if (newMethods.hasOwnProperty(m)) {
+              if (oldMethods.hasOwnProperty(m)) {
+                oldMethods[m] = (function(om, nm) {
+                  return function() {
+                    var nv = nm.apply(this, arguments),
+                        ov = om.apply(this, arguments);
+                    return nv || ov;
+                  };
+                })(oldMethods[m], newMethods[m]);
+              } else {
+                oldMethods[m] = newMethods[m];
+              }
+            }
+          }
+        },
 
 
         // Simple conditional internal logging method to analyze the flow
         // throughout the spa application.
         spaLog = function(msg) {
-          if (debugging) {
+          if (debugging && typeof console != "undefined" && console.log) {
             console.log('(spa) ' + msg);
           }
         },
@@ -209,13 +240,17 @@
         // `setRenderer` which will override this method. If there is a problem,
         // it should return either `null` or `false`.
         templateRenderer = function(template, data) {
-          var p;
-          for(p in data) {
-            if (data.hasOwnProperty(p)) {
-              template = template.replace(new RegExp('{{'+p+'}}','g'), data[p]);
+          if (customRenderer) {
+            return customRenderer.call(this, template, data);        
+          } else {
+            var p;
+            for(p in data) {
+              if (data.hasOwnProperty(p)) {
+                template = template.replace(new RegExp('{{'+p+'}}','g'), data[p]);
+              }
             }
+            return template;
           }
-          return template;
         },
 
 
@@ -227,6 +262,9 @@
           if (typeof url === 'undefined') {
             spaLog('redirecting page: ' + destinationHashPath);
             location.hash = '#!' + destinationHashPath;
+            // Previous path must be cleared otherwise router may not recognize
+            // the change if the path is the same as the new one.
+            previousPath = null;
           } else {
             location = url + (destinationHashPath || '');
           }
@@ -296,11 +334,11 @@
         // are closer to the logic code.
         runCallbacks = function(callbackName, request, response) {
           if (controllers[request.controller][callbackName]) {
-            (controllers[request.controller][callbackName])(request, response);
+            controllers[request.controller][callbackName].call(this, request, response);
             spaLog('callback ' + request.controller + '.' + callbackName + '()');
           }
           if (callbacks[callbackName]) {
-            (callbacks[callbackName])(request);
+            callbacks[callbackName].call(this, request, response);
             spaLog('callback ' + callbackName + '()');
           }
         },
@@ -413,7 +451,8 @@
         // shorter.
         preloadPath = function(destinationPath) {
           var preloadRoute = getRouteFor(destinationPath),
-              currentPath  = location.hash || '#!/',
+              // IE returns "#" when there is nothing in front of the hash. The other browsers return null in this situation
+              currentPath  = (location.hash && "#" != location.hash) ? location.hash : '#!/', 
               request      = null,
               renderedView = null;
 
@@ -508,7 +547,7 @@
             // The preload stack has been emptied and the interval needs to be
             // cancelled and cleared, so further preload responses can activate
             // it again.
-            spaLog('preload stack empty');
+            spaLog('preload stack empty')
             clearInterval(preloadingIntervalId);
             preloadingIntervalId = null;
 
@@ -523,7 +562,7 @@
         // compared to predefined routes. Matching controller/action is then
         // called and passed parameters found in the hash.
         router = function() {
-          var currentPath       = location.hash || '#!/',
+          var currentPath  = (location.hash && "#" != location.hash) ? location.hash : '#!/', // IE returns "#" when there is nothing in front of the hash. The other browsers return null in this situation
               pollingAllowed    = true,
               matchedRouteEntry = null,
               request           = null,
@@ -540,9 +579,9 @@
             if (!matchedRouteEntry) {
               // The route has not been recognized and we need to simulate a
               // 404 response. The 404 template can be defined just as any other.
-              containerElement.empty().html(renderTemplate({
-                options : { template: '404', cache: true }
-              }));
+              containerElement.empty().html(
+                renderTemplate({ options : { template: '404', cache: true } })
+              );
             } else {
               request = {
                 path           : currentPath,
@@ -608,7 +647,8 @@
                         if (!preloadingIntervalId) {
                           preloadingIntervalId = setInterval(
                             function() { emptyPreloadStack(request, response); },
-                            response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY);
+                            response.options.preloadStackDelay || PRELOAD_STACK_POP_DELAY
+                          );
                         }
                         return responsePaths;
                       });
@@ -633,9 +673,9 @@
                 // The route has been recognized, but the controller returned an
                 // empty response probably the object does not exist in the
                 // payload (like wrong id).
-                containerElement.empty().html(renderTemplate({
-                  options : { template: '404', cache: true }
-                }));
+                containerElement.empty().html(
+                  renderTemplate({ options : { template: '404', cache: true } })
+                );
               }
 
               // Previous hash and exploded params out of it are kept
@@ -656,12 +696,19 @@
         // hash path, so the SPA app jumps to the desired state - as in the
         // case of copy/pasting a whole url.
         startRouter = function() {
-          if (hashChangeSupported) {
-            $(window).bind('hashchange', router);
+          if (!running) {
+            running = true;
+            if (hashChangeSupported) {
+              $(window).bind('hashchange', router);
+            } else {
+              setInterval(router, pollingInterval);
+            }
+            router();            
+            return running;
           } else {
-            setInterval(router, pollingInterval);
+            // SPA is already running.
+            return false;
           }
-          router();
         };
 
 
@@ -703,12 +750,29 @@
           return memoize('spa__templates', templateName);
         },
 
-        // Memoization is quite useful, and even though most of the responses and
-        // views are memoized, the mechanism can be useful for use in the custom
+        // Memoization is quite useful in SPA, and even though most of the responses
+        // and views are memoized, the mechanism can be useful for use in the custom
         // controller actions and helpers.
-        getMemoized: function(bucket, key, getterFunc, skipMemoize, conditionalFunc) {
-          return memoize(bucket, key, getterFunc, skipMemoize, conditionalFunc);
-        }
+        // 
+        // The signiture of this method is the same as the one defined at the beginning.
+        getMemoized: function(bucket, key, getterFunc, useMemo, conditionalFunc) {
+          return memoize(bucket, key, getterFunc, useMemo, conditionalFunc);
+        },
+
+        // Simple redirecting method, supporting both urls and hash bang paths,
+        // used internally for redirecting within controllers' response.
+        redirectTo: redirectToPath,
+
+        // The renderer can be called directly if needed for manual partials
+        // renderings. The renderer will be either the default one (built-in),
+        // or the one set through the `setRenderer` method below.
+        render: templateRenderer
+      },
+
+
+      // A boolean indicator whether the app has been started, useful for tests.
+      isRunning: function() {
+        return running;
       },
 
 
@@ -721,6 +785,7 @@
         spaLog('https://github.com/dejanstrbac/spa');
         spaLog('~~~~ ~~~ ~~~ ~~~ ~~~ ~~~~ ~~~~ ~~~');
         spaLog('Debug mode enabled');
+        return debugging;
       },
 
 
@@ -728,8 +793,7 @@
       // can be set via this method. The signiture is function(template, data),
       // where template is a `text/html` file and data is of JSON format.
       setRenderer: function(newRenderer) {
-        delete(templateRenderer);
-        templateRenderer = newRenderer;
+        customRenderer = newRenderer;
       },
 
 
@@ -737,7 +801,7 @@
       // Adding single methods is also easy by directly defining them on
       // the `spaApp.helpers`.
       addHelpers: function(newHelpers) {
-        $.extend(this.helpers, newHelpers);
+        extendMethods(this.helpers, newHelpers);
       },
 
 
@@ -751,8 +815,15 @@
       // execute code in the callback for specific action, you can switch over
       // the property `action` of the request argument, containing the name
       // of the routed controller action.
+      //
+      // Successive calls to this method will extend already degined methods.
       addControllers: function(newControllers) {
-        $.extend(controllers, newControllers);
+        for (c in newControllers) {
+          if (newControllers.hasOwnProperty(c)) {
+            controllers[c] = controllers[c] || {};
+            extendMethods(controllers[c], newControllers[c]);
+          }
+        }
       },
 
 
@@ -767,8 +838,11 @@
       // the request argument passed to the callback. All callbacks accept two arguments
       // `request` and `response`, except `beforeFilter` which accepts only `request`
       // as it executes before the controller action.
+      //
+      // Mutliple calls to this method for same callbacks are extending those callbacks
+      // instead of overwriting them.
       addCallbacks: function(newCallbacks) {
-        $.extend(callbacks, newCallbacks);
+        extendMethods(callbacks, newCallbacks);
       },
 
 
@@ -780,15 +854,16 @@
       // If action property is ommited above, the app will assume it's called `handler`
       // (from `DEFAULT_ACTION_NAME`). You can define as many routes as needed.
       addRoutes: function(newRoutes) {
-        $.merge(routes, newRoutes);
+        routes = routes.concat(newRoutes);
       },
 
 
       // Start the app by triggering the router to start listening for path
       // changes. The method has been wrapped in anonymous action for future changes.
       run: function() {
-        startRouter();
+        return startRouter();
       }
+
 
     };
 
