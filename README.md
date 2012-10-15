@@ -1,7 +1,7 @@
 *SPA*
 =====
-a simple javascript micro-framework for single page apps
---------------------------------------------------------
+a simple jQuery micro-framework for single page apps
+----------------------------------------------------
 
 Annotated source code available at [http://dejanstrbac.github.com/spa](http://dejanstrbac.github.com/spa)
 
