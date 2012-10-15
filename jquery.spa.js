@@ -167,7 +167,7 @@
         // Simple conditional internal logging method to analyze the flow
         // throughout the spa application.
         spaLog = function(msg) {
-          if (debugging && (typeof console != "undefined") && console.log) {
+          if (debugging && (typeof console !== "undefined") && console.log) {
             console.log('(spa) ' + msg);
           }
         },
