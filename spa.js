@@ -3,7 +3,7 @@
  *          m####################m
  *        m#####`"#m m###"""'######m
  *       ######*"  "   "   "mm#######
- *     m####"  ,             m"#######m       SPA (Single Page App) / jQuery
+ *     m####"  ,             m"#######m       SPA (Single Page App) for jQuery/Zepto
  *    m#### m*" ,'  ;     ,   "########m
  *    ####### m*   m  |#m  ;  m ########      https://github.com/dejanstrbac/spa
  *   |######### mm#  |####  #m##########|
@@ -39,10 +39,10 @@
  *
  */
 
-;(function( $ ) {
+;(function(window, document, $) {
   $.fn.spa = $.fn.spa || function() {
 
-   var  SPA_VERSION = 2.10,
+   var  SPA_VERSION = 2.11,
 
         // Not all browsers support the `onhashchange` event. We must check,
         // and if not supported fallback to the alternative solution of polling.
@@ -52,6 +52,7 @@
           return ('onhashchange' in window) &&
                  (document.documentMode === undefined || document.documentMode > 7);
         })(),
+
 
         // In the app routes, if there is no action defined, this one will be
         // assumed. This makes sense when there is a single action controller.
@@ -665,7 +666,7 @@
 
                   // We must ensure we are scrolling to the page top,
                   // to simulate a well known page load behaviour
-                  $("body,html,document").scrollTop(0);
+                  window.scrollTo(0, 0);
                 }
 
                 // The response returned can ask for the app to redirect the page,
@@ -877,4 +878,4 @@
     };
 
   };
-})( jQuery );
+})(window, document, $);

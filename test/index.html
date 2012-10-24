@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>SPA Test Page</title>  
+    <title>SPA Self-Test Page</title>
     <style type="text/css">
       table { width: 100%; border-collapse:collapse; }
       table tr th { text-align: left; }      
@@ -9,25 +9,35 @@
       table tr.false { background-color: #faa; }
     </style>
 
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-    <script type="text/javascript" src="jquery.spa.js"></script>
-    <script type="text/javascript" src="http://home.deindeal.ch/assets/jquery.mustache.js"></script>
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.mustache.js"></script>
+    <script type="text/javascript" src="../jquery.spa.js"></script>
     
-    <!-- the main template, listing test results -->
     <script type="text/html" id="spa__tests__index">
-      <h1>SPA Tests</h1>
+      <h1>SPA Self-Tests</h1>
       <p>
-        These are simple tests for development purposes. 
+        These are simple integration self-tests for further development purposes. 
         <br/>
-        The page is constructed and rendered with SPA. 
-        It is normal to see red flashes.
+        The page and tests are constructed and rendered with SPA itself.
+      </p>
+      <p>
+        It is normal to see red flashes, as the pages will change as a part of the test.
+        <br/>
+        Please be patient, the tests will need a few seconds.
       </p>
       <table>
         <thead>
-          <tr><th>Id</th><th>Description</th><th>Result</th></tr>
+          <tr>
+            <th>Id</th>
+            <th>Description</th>
+            <th>Result</th>
+          </tr>
         </thead>
         {{#tests}}
-        <tr class="{{result}}"><td>#{{id}}</td><td>{{name}}</td><td>{{#result}}ok{{/result}}{{^result}}fail{{/result}}</td></tr>
+        <tr class="{{result}}">
+          <td>#{{id}}</td>
+          <td>{{name}}</td>
+          <td>{{#result}}ok{{/result}}{{^result}}fail{{/result}}</td></tr>
         {{/tests}}
       </table>
     </script>
@@ -35,6 +45,7 @@
     <!-- The 404 page, please do not change, content lookup is done-->
     <script type="text/html" id="spa__404">404</script>
   </head>
+
 
   <body>
     <!-- this is the main content area where templates get rendered -->
@@ -45,18 +56,21 @@
     <!-- 
         tests for SPA are written in SPA, it gets really curly down there,
         trying several use cases and asserting results. What follows is not
-        a way how to write SPA apps, but an extreme push of core features,
-        with additional raping through overriding.
+        a good way to write SPA apps, but an extreme push of core features,
+        with additional raping through overriding, so all functionalities can
+        be touched.
       -->
+
     <script type="text/javascript">
       var spaApp,
-          timer         = null,   // for testing timed actions, one shot only
+          timer         = null,   // for testing timed actions, one run only
           hashTest      = false,  // this global will check flows through hash changes
           callbacksTest = '',     // we'll capture the order of callbacks here
-          not_found     = null;   // for testing 404 page
+          not_found     = null;   // for testing the 404 page
 
       $(function() {
         spaApp = $('#spa_main').spa();
+
 
         spaApp.addHelpers({
 
@@ -172,7 +186,6 @@
         });
 
 
-
         spaApp.addControllers({
           tests: {
 
@@ -201,9 +214,9 @@
                               setTimeout(function(){              
                                 not_found = ($('#spa_main').text() === '404');                  
                                 spaApp.helpers.redirectTo('/');
-                              }, 200);
-                          }, 200);
-                        }, 200);
+                              }, 1000);
+                          }, 1000);
+                        }, 1000);
               }
               return {
                 data: spaApp.helpers.getTests(),
@@ -270,15 +283,14 @@
         });
 
 
-
         spaApp.addRoutes([
           { url: '^/hashtest$', controller: 'tests', action: 'hashtest' },
           { url: '^/?$',        controller: 'tests', action: 'index' }
         ]);
 
+
         spaApp.run();
       });
     </script>
-
   </body>
 </html>
