@@ -47,6 +47,7 @@ Please note that SPA is not a replacement for [backbone.js](http://backbonejs.or
 
 ### Source Code
 The annotated source code is available at [http://dejanstrbac.github.com/spa](http://dejanstrbac.github.com/spa) 
+
 Improvement suggestions are highly welcome.
 
 
@@ -62,7 +63,6 @@ SPA is currently used at:
 
 # Quickstart
 Include the spa.js library in your pages, after including all the dependencies (jQuery/Zepto/Underscore/Mustache etc.). 
-Now you can start writing your SPA app:
 
     <script type="text/javascript" src="spa.js"></script>
 
