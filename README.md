@@ -2,11 +2,10 @@
 ------------------------------------------------------
 
 # Introduction
-
-SPA is a micro-framework built around jQuery (or zepto) that aids building client browsing-heavy (read-heavy) javascript apps, that have no need for continous communication with the server. It expects that the server sends a single page with a JSON payload embedded into the page as a variable:
+SPA is a micro-framework built around jQuery (or zepto) that aids building client browsing-heavy (read-heavy) javascript apps, that have no need for continous communication with the server. It expects that the server sends a single page with a JSON payload embedded into the page as a variable, from which it serves the site content:
 
     var spaPayload = {
-      products: [/* a lot of data */]
+      products: [/* lots of data */]
     };
 
 SPA is not the universal solution to single page applications, but only one take based on the problem I encountered. The source code of SPA is very small and heavily documented. Depending on your requirements, it might be well worth assembling your own library, and you are welcome to reuse whatever you can from SPA.
@@ -19,7 +18,7 @@ The benefits of SPA apps are:
 
 - Possibility to detached frontend from the backend with a JSON-friendly database like MongoDB in between.
 
-- Image preloading; SPA can use currently available bandwidth to load images in the background for instant viewing. This can be particularly needed on mobile devices that have interrupted connectivity.
+- Paths and images preloading; SPA can use currently available bandwidth to load images in the background for instant viewing. This can be particularly needed on mobile devices that have interrupted connectivity.
 
 Please note that SPA is not a replacement for [backbone.js](http://backbonejs.org) or [spine.js](http://spinejs.com), as it does not (intentionally) follow the MVC pattern strictly:
 
@@ -28,6 +27,7 @@ Please note that SPA is not a replacement for [backbone.js](http://backbonejs.or
 - Controllers are in charge of extracting data from the JSON payload (possibly also memoizing it) and passing the results onto the views. For extracting of the data, it is recommended to use a library such as [underscore.js](http://underscorejs.org)
 
 - Views are rendered via the simple built-in renderer, but it is advisable to plug-in own renderer function that accepts JSON. The templating library [Mustache.js](https://github.com/janl/mustache.js) is highly recommended.
+
 
 ### Requirements
 - [jQuery](http://jquery.com) or [Zepto](http://zeptojs.com) javascript library.
@@ -57,16 +57,14 @@ A simple integration self-test is included in the repo. It will test the core fu
 ### Real World Usage
 SPA is currently used at:
 
-  - [DeinDeal.ch](http://home.deindeal.ch)
+- [DeinDeal.ch](http://home.deindeal.ch)
 
 
 # Quickstart
-
 Include the spa.js library in your pages, after including all the dependencies (jQuery/Zepto/Underscore/Mustache etc.). 
 Now you can start writing your SPA app:
 
     <script type="text/javascript" src="spa.js"></script>
-
 
 Define your Spa app object (call it as you wish) in a container. If you intend to expose the interfaces to SPA, leave this variable in the global namespace.
 
@@ -78,7 +76,6 @@ Define your Spa app object (call it as you wish) in a container. If you intend t
         spaApp = $('#your_app_container').spa();
       });
     </script>
-
 
 You should now define your routes. Spa has its paths in the location hash, and they look like `#!/product/1`. Everything after the `#!` is the path that will be passed on to the router for regex matching.
 
@@ -158,7 +155,6 @@ To run this app, after adding routes and controllers you just need to call the `
 
 
 ## Rendering Action Results
-
 Template names are assumed based on the controller and action name. In the head of the HTML, you should define all templates, with the conventions of `"spa__" + controller + "__" + action` name.
 
 The following template would be rendered for the action `index` in the controller `collection`:
@@ -176,8 +172,8 @@ You _shouldn't put javascript code_ in the templates, even if by some miracle it
 
 All templates are memoized at load time. If you need to fetch a template from your code, spa exposes a helper method to fetch a memoized template `helpers.getTemplate(templateName)`. This might come in handy if you work with active partials.
 
-### Rendering Nothing
 
+### Rendering Nothing
 In some cases your controller action might not need a view. To avoid rendering a template, just set the `renderNothing` variable to `true` in the options object of the response. 
 
     return {
@@ -189,7 +185,6 @@ In some cases your controller action might not need a view. To avoid rendering a
 
 
 ### Redirecting
-
 Sometimes you might want to redirect to another path, especially if you have actions which don't render anything as above. To do so, just add the `redirectTo` variable in the options object of the response, setting the destination path as value:
 
     return {
@@ -202,8 +197,8 @@ Sometimes you might want to redirect to another path, especially if you have act
 
 Note however that the destination should be a relative path for the spa app, a spa path, without the prefix '#!'.
 
-## Helpers
 
+## Helpers
 If you need to isolate some common functions used between controllers, you can add them to the helpers and call them from the controllers as `spaApp.helpers.myMethod()`. You can define this anywhere before running the app.
 
     spaApp.addHelpers({ 
@@ -219,7 +214,6 @@ If you need to isolate some common functions used between controllers, you can a
 
 
 ## Callbacks
-
 Spa supports callbacks: `beforeFilter`, `afterFilter`, `beforeRender` and  `afterRender`. These can be defined on two levels - in the controller, just as actions, called around the actions of that controller only, or on the global level for all controller actions. A controller specific callback executes before the global one.
 
     /*
@@ -287,7 +281,6 @@ If you want a callback to execute selectively per action, test the `request.acti
 
 
 ## Memoizing
-
 Spa uses memoization extensively, and it exposes its internal mechanism via public helper `helpers.getMemoized(bucket, key, getterFunc, useMemo, conditionalFunc)` for possible usage in controllers and helpers. 
 
 Check this example of a helper that searches for a product in the payload named `spaPayload` via the [Underscore.js](http://underscorejs.org) library, and memoizes the result so further requests are not evaluating the costly search operation:
@@ -320,7 +313,6 @@ Of course, we could have skipped the controller action and flow directly to the 
 
 
 ## Preloading and Background Rendering
-
 To enhance responsivness, SPA can render further views in the background and cache their images in the browser, as they are the ones that take most to load. Not all images might be needed though, as the user might see only few in the first screen, and loading all of them might be very heavy on the resources. SPA offers a safe way to adjust this in the response object, via the `preloadPaths` and `preloadImages` variables.
 
     spaApp.addControllers({
