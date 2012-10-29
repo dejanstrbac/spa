@@ -1,7 +1,5 @@
-*SPA*
-=====
-a simple micro-framework for single page apps (SPA)
----------------------------------------------------
+*SPA* - a simple, micro-framework for single page apps
+------------------------------------------------------
 
 # Introduction
 
@@ -31,54 +29,55 @@ Please note that SPA is not a replacement for [backbone.js](http://backbonejs.or
 
 - Views are rendered via the simple built-in renderer, but it is advisable to plug-in own renderer function that accepts JSON. The templating library [Mustache.js](https://github.com/janl/mustache.js) is highly recommended.
 
-Requirements
-------------
+## Requirements
 - [jQuery](http://jquery.com) or [Zepto](http://zeptojs.com) javascript library.
 
-Restrictions
-------------
+
+## Restrictions
 - SPA uses the location hash to identify and route actions. This means that you cannot have another javascript dependency (as in another javscript library) that uses the location hash. You could overcome this, but not without a 5 pound hammer, so I guess SPA is not for you.
 
 - SPA is for building javascript apps. It will obviously not work where javascript support is turned off.
 
-Browser Support
----------------
+
+## Browser Support
 - SPA uses the `onHashChange` event to route actions. However, some browsers do not support this event, so there is a polling fallback that will check for hash changes every ~300 milliseconds.
 
 - SPA should be working correctly in all major browsers, including Internet Explorer from version 6 and up. If you find an issue in your browser, please be kind to report either as a github issue or directly to me at [dejan.strbac@gmail.com](mailto:dejan.strbac@gmail.com).
 
 
-Source Code
------------
+## Source Code
 The annotated source code is available at [http://dejanstrbac.github.com/spa](http://dejanstrbac.github.com/spa) 
 Improvement suggestions are highly welcome.
 
 
-Testing
--------
-A simple integration self-test is included in the repo. It will test the core functionalities as a SPA app itself.
+## Testing
+A simple integration self-test is included in the repo. It will test the core functionalities as a SPA app itself. Not pretiest, but hands-on coverage.
 
-Real World Usage
-----------------
+
+## Real World Usage
 SPA is currently used at:
 
   - [DeinDeal.ch](http://home.deindeal.ch)
 
 
-# Setup & Usage
-Include the spa.js library in your pages, after including all the dependencies (jQuery/Zepto/Underscore/Mustache etc.), and you can start writing your SPA app:
+# Quickstart
+
+Include the spa.js library in your pages, after including all the dependencies (jQuery/Zepto/Underscore/Mustache etc.). 
+Now you can start writing your SPA app:
 
     <script type="text/javascript" src="spa.js"></script>
 
-## Quickstart
 
 Define your Spa app object (call it as you wish) in a container. If you intend to expose the interfaces to SPA, leave this variable in the global namespace.
+
   
-    var spaApp;
+    <script type="text/javascript">
+      var spaApp;
     
-    $(function(){
-      spaApp = $('#your_app_container').spa();
-    });
+      $(function(){
+        spaApp = $('#your_app_container').spa();
+      });
+    </script>
 
 
 You should now define your routes. Spa has its paths in the location hash, and they look like `#!/product/1`. Everything after the `#!` is the path that will be passed on to the router for regex matching.
@@ -158,7 +157,7 @@ To run this app, after adding routes and controllers you just need to call the `
     });
 
 
-### Rendering Results
+## Rendering Action Results
 
 Template names are assumed based on the controller and action name. In the head of the HTML, you should define all templates, with the conventions of `"spa__" + controller + "__" + action` name.
 
@@ -177,7 +176,7 @@ You _shouldn't put javascript code_ in the templates, even if by some miracle it
 
 All templates are memoized at load time. If you need to fetch a template from your code, spa exposes a helper method to fetch a memoized template `helpers.getTemplate(templateName)`. This might come in handy if you work with active partials.
 
-#### Rendering Nothing
+### Rendering Nothing
 
 In some cases your controller action might not need a view. To avoid rendering a template, just set the `renderNothing` variable to `true` in the options object of the response. 
 
@@ -189,7 +188,7 @@ In some cases your controller action might not need a view. To avoid rendering a
     }
 
 
-#### Redirecting
+### Redirecting
 
 Sometimes you might want to redirect to another path, especially if you have actions which don't render anything as above. To do so, just add the `redirectTo` variable in the options object of the response, setting the destination path as value:
 
@@ -203,7 +202,7 @@ Sometimes you might want to redirect to another path, especially if you have act
 
 Note however that the destination should be a relative path for the spa app, a spa path, without the prefix '#!'.
 
-### Helpers
+## Helpers
 
 If you need to isolate some common functions used between controllers, you can add them to the helpers and call them from the controllers as `spaApp.helpers.myMethod()`. You can define this anywhere before running the app.
 
@@ -219,7 +218,7 @@ If you need to isolate some common functions used between controllers, you can a
     });
 
 
-### Callbacks
+## Callbacks
 
 Spa supports callbacks: `beforeFilter`, `afterFilter`, `beforeRender` and  `afterRender`. These can be defined on two levels - in the controller, just as actions, called around the actions of that controller only, or on the global level for all controller actions. A controller specific callback executes before the global one.
 
@@ -287,7 +286,7 @@ If you want a callback to execute selectively per action, test the `request.acti
     }
 
 
-### Memoizing
+## Memoizing
 
 Spa uses memoization extensively, and it exposes its internal mechanism via public helper `helpers.getMemoized(bucket, key, getterFunc, useMemo, conditionalFunc)` for possible usage in controllers and helpers. 
 
@@ -352,7 +351,7 @@ Note that you can and should define `preloadImages` if you are using preloading 
 Preloading is optimized for ahead browsing, so it doesn't bother with old requests for preloading that might pile up while quickly browsing. The most relevant further paths are rendered and cached first, and the preloading queue has a cut-off limit.
 
 
-### Debuging
+## Debuging
 To enable debugging, simply call `setDebug(true)` on the spa object. You will see the logs in the console, taken your browser supports it.
 
 
