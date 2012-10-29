@@ -29,32 +29,32 @@ Please note that SPA is not a replacement for [backbone.js](http://backbonejs.or
 
 - Views are rendered via the simple built-in renderer, but it is advisable to plug-in own renderer function that accepts JSON. The templating library [Mustache.js](https://github.com/janl/mustache.js) is highly recommended.
 
-## Requirements
+### Requirements
 - [jQuery](http://jquery.com) or [Zepto](http://zeptojs.com) javascript library.
 
 
-## Restrictions
+### Restrictions
 - SPA uses the location hash to identify and route actions. This means that you cannot have another javascript dependency (as in another javscript library) that uses the location hash. You could overcome this, but not without a 5 pound hammer, so I guess SPA is not for you.
 
 - SPA is for building javascript apps. It will obviously not work where javascript support is turned off.
 
 
-## Browser Support
+### Browser Support
 - SPA uses the `onHashChange` event to route actions. However, some browsers do not support this event, so there is a polling fallback that will check for hash changes every ~300 milliseconds.
 
 - SPA should be working correctly in all major browsers, including Internet Explorer from version 6 and up. If you find an issue in your browser, please be kind to report either as a github issue or directly to me at [dejan.strbac@gmail.com](mailto:dejan.strbac@gmail.com).
 
 
-## Source Code
+### Source Code
 The annotated source code is available at [http://dejanstrbac.github.com/spa](http://dejanstrbac.github.com/spa) 
 Improvement suggestions are highly welcome.
 
 
-## Testing
+### Testing
 A simple integration self-test is included in the repo. It will test the core functionalities as a SPA app itself. Not pretiest, but hands-on coverage.
 
 
-## Real World Usage
+### Real World Usage
 SPA is currently used at:
 
   - [DeinDeal.ch](http://home.deindeal.ch)
