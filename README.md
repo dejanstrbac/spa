@@ -349,6 +349,7 @@ To enable debugging, simply call `setDebug(true)` on the spa object. You will se
 
 ## Licence
 Copyright (c) 2012, Dejan Strbac
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 
