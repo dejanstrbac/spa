@@ -343,7 +343,7 @@ Note that you can and should define `preloadImages` if you are using preloading 
 Preloading is optimized for ahead browsing, so it doesn't bother with old requests for preloading that might pile up while quickly browsing. The most relevant further paths are rendered and cached first, and the preloading queue has a cut-off limit.
 
 
-## Debuging
+## Debugging
 To enable debugging, simply call `setDebug(true)` on the spa object. You will see the logs in the console, taken your browser supports it.
 
 
