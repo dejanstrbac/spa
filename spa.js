@@ -112,7 +112,7 @@
         callbacks   = {},
 
 
-        // SPA includes a basic template renderer, but it is recommended to 
+        // SPA includes a basic template renderer, but it is recommended to
         // overrided it with something more powerful like Mustache engine.
         customRenderer = null,
 
@@ -125,18 +125,18 @@
         // There is quite a lot of stuff happening within SPA, although all
         // fairly simple. Having some logging in development mode might be helpful.
         debugging = false,
-        
+
 
         // A simple indicator whether application is running or not.
         running = false,
 
 
         // Method to extract hash paths from the url. IE returns "#" when there
-        // is nothing in front of the hash, while other browsers return null 
+        // is nothing in front of the hash, while other browsers return null
         // in this situation.
         getHash = function() {
-          if (location.hash && (location.hash !== '#')) {
-            return location.hash;
+          if (window.location.hash && (window.location.hash !== '#')) {
+            return window.location.hash;
           } else {
             return '#!/';
           }
@@ -147,16 +147,19 @@
         // and controller objects. The methods are chained, the new one taking place
         // before the old one.
         extendMethods = function(oldMethods, newMethods) {
-          for (var m in newMethods) {
+          var extender = function(om, nm) {
+                return function() {
+                  var nv = nm.apply(this, arguments),
+                      ov = om.apply(this, arguments);
+                  return nv || ov;
+                };
+              },
+              m = null;
+
+          for (m in newMethods) {
             if (newMethods.hasOwnProperty(m)) {
               if (oldMethods.hasOwnProperty(m)) {
-                oldMethods[m] = (function(om, nm) {
-                  return function() {
-                    var nv = nm.apply(this, arguments),
-                        ov = om.apply(this, arguments);
-                    return nv || ov;
-                  };
-                })(oldMethods[m], newMethods[m]);
+                oldMethods[m] = extender(oldMethods[m], newMethods[m]);
               } else {
                 oldMethods[m] = newMethods[m];
               }
@@ -254,7 +257,7 @@
         // it should return either `null` or `false`.
         templateRenderer = function(template, data) {
           if (customRenderer) {
-            return customRenderer.call(this, template, data);        
+            return customRenderer.call(this, template, data);
           } else {
             var p;
             for(p in data) {
@@ -274,12 +277,12 @@
         redirectToPath = function(destinationHashPath, url) {
           if (typeof url === 'undefined') {
             spaLog('redirecting page: ' + destinationHashPath);
-            location.hash = '#!' + destinationHashPath;
+            window.location.hash = '#!' + destinationHashPath;
             // Previous path must be cleared otherwise router may not recognize
             // the change if the path is the same as the new one.
             previousPath = null;
           } else {
-            location = url + (destinationHashPath || '');
+            window.location = url + (destinationHashPath || '');
           }
         },
 
@@ -287,7 +290,7 @@
         // Parsing of the the current location hash and splitting it in
         // REST-like parameters which are returned.
         getParams = function(str) {
-          var qs      = str || location.hash,
+          var qs      = str || window.location.hash,
               params  = {},
               qsArray = null,
               pair    = null;
@@ -331,8 +334,7 @@
             // Conditional memoization function, will return true if property
             // `options.cache` is not `undefined`, `0`, `null`, or `''`.
             return response &&
-                     response.hasOwnProperty('options') &&
-                       !!response.options.cache;
+                     response.hasOwnProperty('options') && !!response.options.cache;
           });
         },
 
@@ -345,7 +347,7 @@
         //
         // Controller callbacks have higher priority than the app ones as they
         // are closer to the logic code.
-        // 
+        //
         // Note that response may be ommited in some cases such as `beforeFilter`.
         runCallbacks = function(callbackName, request, response) {
           if (controllers[request.controller][callbackName]) {
@@ -441,8 +443,7 @@
           // If image had own class tag, it would be ignored as new class is
           // injected as first definition. The modified template is only for
           // image extraction purposes and is not saved or displayed.
-          htmlText = htmlText.replace(/\<[iI][mM][gG]/g,
-                      '<br class="spa-image-preloading"');
+          htmlText = htmlText.replace(/<[iI][mM][gG]/g, '<br class="spa-image-preloading"');
 
           if (!$.isNumeric(numberOfImages)) {
             numberOfImages = PRELOAD_IMAGES_LIMIT;
@@ -713,7 +714,7 @@
             } else {
               setInterval(router, pollingInterval);
             }
-            router();            
+            router();
             return running;
           } else {
             // SPA is already running.
@@ -763,7 +764,7 @@
         // Memoization is quite useful in SPA, and even though most of the responses
         // and views are memoized, the mechanism can be useful for use in the custom
         // controller actions and helpers.
-        // 
+        //
         // The signiture of this method is the same as the one defined at the beginning.
         getMemoized: function(bucket, key, getterFunc, useMemo, conditionalFunc) {
           return memoize(bucket, key, getterFunc, useMemo, conditionalFunc);
@@ -828,7 +829,7 @@
       //
       // Successive calls to this method will extend already degined methods.
       addControllers: function(newControllers) {
-        for (c in newControllers) {
+        for (var c in newControllers) {
           if (newControllers.hasOwnProperty(c)) {
             controllers[c] = controllers[c] || {};
             extendMethods(controllers[c], newControllers[c]);
