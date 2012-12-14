@@ -710,7 +710,7 @@
           if (!running) {
             running = true;
             if (hashChangeSupported) {
-              $(window).bind('hashchange', router);
+              $(window).on('hashchange', router);
             } else {
               setInterval(router, pollingInterval);
             }
