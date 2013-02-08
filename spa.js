@@ -736,11 +736,12 @@
           templateName = templateEl.attr('id');
 
       if (templateName.substr(0,5) === 'spa__') {
+
         templateName = templateName.substring(5);
+        memoize('spa__templates', templateName, function() {
+          return templateEl.html();
+        });
       }
-      memoize('spa__templates', templateName, function() {
-        return templateEl.html();
-      });
     });
 
 
