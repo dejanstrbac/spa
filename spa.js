@@ -113,7 +113,7 @@
 
 
         // SPA includes a basic template renderer, but it is recommended to
-        // overrided it with something more powerful like Mustache engine.
+        // override it with something more powerful like Mustache templating.
         customRenderer = null,
 
 
