@@ -829,7 +829,8 @@
       //
       // Successive calls to this method will extend already degined methods.
       addControllers: function(newControllers) {
-        for (var c in newControllers) {
+        var c;
+        for (c in newControllers) {
           if (newControllers.hasOwnProperty(c)) {
             controllers[c] = controllers[c] || {};
             extendMethods(controllers[c], newControllers[c]);
