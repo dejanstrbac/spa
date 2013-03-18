@@ -42,7 +42,7 @@
 ;(function(window, document, $) {
   $.fn.spa = $.fn.spa || function() {
 
-   var  SPA_VERSION = 2.11,
+   var  SPA_VERSION = 2.12,
 
         // Not all browsers support the `onhashchange` event. We must check,
         // and if not supported fallback to the alternative solution of polling.
@@ -63,7 +63,7 @@
         // considering that the visitor sees only a part of the page once it's
         // rendered. This parameter can be defined per controller, in the
         // `options.preloadImages` property.
-        PRELOAD_IMAGES_LIMIT = 30,
+        PRELOAD_IMAGES_LIMIT = 10,
 
 
         // Preloading is based on a stack (LIFO) structure. The most relevant,
@@ -257,7 +257,7 @@
         // it should return either `null` or `false`.
         templateRenderer = function(template, data) {
           if (customRenderer) {
-            return customRenderer.call(this, template, data);
+            return customRenderer(template, data);
           } else {
             var p;
             for(p in data) {
@@ -351,11 +351,11 @@
         // Note that response may be ommited in some cases such as `beforeFilter`.
         runCallbacks = function(callbackName, request, response) {
           if (controllers[request.controller][callbackName]) {
-            controllers[request.controller][callbackName].call(this, request, response);
+            setTimeout(function(){ controllers[request.controller][callbackName].call(null, request, response); }, 0);
             spaLog('callback ' + request.controller + '.' + callbackName + '()');
           }
           if (callbacks[callbackName]) {
-            callbacks[callbackName].call(this, request, response);
+            setTimeout(function(){ callbacks[callbackName].call(null, request, response); }, 0);
             spaLog('callback ' + callbackName + '()');
           }
         },

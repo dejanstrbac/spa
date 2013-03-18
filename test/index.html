@@ -4,7 +4,7 @@
     <title>SPA Self-Test Page</title>
     <style type="text/css">
       table { width: 100%; border-collapse:collapse; }
-      table tr th { text-align: left; }      
+      table tr th { text-align: left; }
       table tr.true { background-color: #afa; }
       table tr.false { background-color: #faa; }
     </style>
@@ -12,11 +12,11 @@
     <script type="text/javascript" src="jquery.min.js"></script>
     <script type="text/javascript" src="jquery.mustache.js"></script>
     <script type="text/javascript" src="../spa.js"></script>
-    
+
     <script type="text/html" id="spa__tests__index">
       <h1>SPA Self-Tests</h1>
       <p>
-        These are simple integration self-tests for further development purposes. 
+        These are simple integration self-tests for further development purposes.
         <br/>
         The page and tests are constructed and rendered with SPA itself.
       </p>
@@ -53,7 +53,7 @@
       Main content area that will be replaced
     </div>
 
-    <!-- 
+    <!--
         tests for SPA are written in SPA, it gets really curly down there,
         trying several use cases and asserting results. What follows is not
         a good way to write SPA apps, but an extreme push of core features,
@@ -81,28 +81,28 @@
           getTests: function () {
             return {
               tests: [
-                { 
-                  id: 0, 
-                  name: "debug mode (check console)", 
-                  result: (function() { 
-                    return spaApp.setDebug(true); 
-                  })()
-                },
-
-
-                { 
-                  id: 1, 
-                  name: "loading, run, repetitive run", 
-                  result: (function() { 
-                    return spaApp.isRunning() && !spaApp.run(); 
+                {
+                  id: 0,
+                  name: "debug mode (check console)",
+                  result: (function() {
+                    return spaApp.setDebug(true);
                   })()
                 },
 
 
                 {
-                  id: 2, 
-                  name: "templates", 
-                  result: (function() { 
+                  id: 1,
+                  name: "loading, run, repetitive run",
+                  result: (function() {
+                    return spaApp.isRunning() && !spaApp.run();
+                  })()
+                },
+
+
+                {
+                  id: 2,
+                  name: "templates",
+                  result: (function() {
                     return ((typeof spaApp.helpers.getTemplate('tests__index') === 'string') &&
                             (typeof spaApp.helpers.getTemplate('tests__nonexisting') === 'undefined'));
                   })()
@@ -110,20 +110,20 @@
 
 
                 {
-                  id: 3, 
-                  name: "memoization, conditional value, conditional method", 
-                  result: (function() { 
-                    var result     = false, 
-                        testerFunc = function(useMemo, condFunc) {                          
-                          return spaApp.helpers.getMemoized('test', 'memoization', 
-                            function() { 
-                              result = !result; 
-                              return result; 
-                            }, 
+                  id: 3,
+                  name: "memoization, conditional value, conditional method",
+                  result: (function() {
+                    var result     = false,
+                        testerFunc = function(useMemo, condFunc) {
+                          return spaApp.helpers.getMemoized('test', 'memoization',
+                            function() {
+                              result = !result;
+                              return result;
+                            },
                             useMemo, condFunc);
                         };
 
-                    return testerFunc() && testerFunc() && testerFunc() && 
+                    return testerFunc() && testerFunc() && testerFunc() &&
                            !testerFunc(false) && testerFunc(false) && !testerFunc(false) &&
                            testerFunc(true, function(){ return false; }) &&
                            !testerFunc(true, function(){ return false; });
@@ -132,17 +132,17 @@
 
 
                 {
-                  id: 4, 
-                  name: "hash listeners, routing, redirection, rendering, rendering nothing", 
+                  id: 4,
+                  name: "hash listeners, routing, redirection, rendering, rendering nothing",
                   result: hashTest
                 },
 
 
                 {
-                  id: 5, 
-                  name: "callbacks, order, overriding",                  
-                  result: (callbacksTest === "<bfBF><afAF><brBR><arAR><bfBF><afAF><bfBF><afAF><brBR><arAR><bfBF>")
-                },                             
+                  id: 5,
+                  name: "callbacks, order, overriding",
+                  result: (callbacksTest === "<bfBF><afAF><brBR><arAR><bfBF><afAF><bfBF><afAF><brBR><arAR>")
+                },
 
 
                 { id: 6,
@@ -160,7 +160,7 @@
                            (spaApp.helpers.render("{{#a}}{{i}}{{/a}}", {a:[{i:1},{i:2}]}) === "12");
                   })()
                 },
-                
+
 
                 {
                   id: 7,
@@ -175,10 +175,10 @@
 
 
                 {
-                  id: 8, 
-                  name: "404 page, rendering, container contents, browsing",                  
+                  id: 8,
+                  name: "404 page, rendering, container contents, browsing",
                   result: not_found
-                }                         
+                }
 
               ]
             };
@@ -205,14 +205,14 @@
               callbacksTest += '<ar';
             },
 
-            index: function(request) {              
+            index: function(request) {
               if (timer === null) {
-                timer = setTimeout(function(){ 
+                timer = setTimeout(function(){
                           spaApp.helpers.redirectTo('/hashtest');
                           setTimeout(function(){
-                            spaApp.helpers.redirectTo('/unknown');                              
-                              setTimeout(function(){              
-                                not_found = ($('#spa_main').text() === '404');                  
+                            spaApp.helpers.redirectTo('/unknown');
+                              setTimeout(function(){
+                                not_found = ($('#spa_main').text() === '404');
                                 spaApp.helpers.redirectTo('/');
                               }, 1000);
                           }, 1000);
@@ -240,7 +240,7 @@
           }
         });
 
-        
+
         // we will attach some callbacks and test their order of execution
         // as compared to the overriden ones, and the ones in the controller.
         spaApp.addCallbacks({
@@ -253,7 +253,7 @@
           },
 
           beforeRender: function(request, response) {
-            callbacksTest += '>';            
+            callbacksTest += '>';
           },
 
           afterRender: function(request, response) {
@@ -263,10 +263,10 @@
 
 
         // Override a callback, will execute before the one above, adding
-        // one character in front, to be equal to the others.    
+        // one character in front, to be equal to the others.
         spaApp.addCallbacks({
           beforeFilter: function(request) {
-            callbacksTest += 'BF';            
+            callbacksTest += 'BF';
           },
 
           afterFilter: function(request, response) {
