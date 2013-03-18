@@ -351,11 +351,15 @@
         // Note that response may be ommited in some cases such as `beforeFilter`.
         runCallbacks = function(callbackName, request, response) {
           if (controllers[request.controller][callbackName]) {
-            setTimeout(function(){ controllers[request.controller][callbackName].call(null, request, response); }, 0);
+            setTimeout(function(){
+              controllers[request.controller][callbackName].call(null, request, response);
+            }, 0);
             spaLog('callback ' + request.controller + '.' + callbackName + '()');
           }
           if (callbacks[callbackName]) {
-            setTimeout(function(){ callbacks[callbackName].call(null, request, response); }, 0);
+            setTimeout(function(){
+              callbacks[callbackName].call(null, request, response);
+            }, 0);
             spaLog('callback ' + callbackName + '()');
           }
         },
