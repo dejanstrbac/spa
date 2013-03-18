@@ -671,7 +671,9 @@
 
                   // We must ensure we are scrolling to the page top,
                   // to simulate a well known page load behaviour
-                  window.scrollTo(0, 0);
+                  setTimeout(function(){
+                    window.scrollTo(0, 0);
+                  }, 0);
                 }
 
                 // The response returned can ask for the app to redirect the page,
