@@ -488,6 +488,7 @@
             // A call to the controller is being made assuming it will memoize
             // the response for possible future request.
             response = getControllerActionResponseFor(request);
+            repsonse.options = response.options || {};
 
             // Preloading does not return anything nor does it render any templates
             // into the container. Renderer is being called only to memoize the
@@ -624,6 +625,7 @@
               // If the controller action responed to hash parameters with data,
               // we can proceed to callbacks and rendering.
               if (response) {
+                response.options = response.options || {};
 
                 // Some controller actions have no need of a rendered response.
                 // Those can be popups for instance, triggered by hash changes.
