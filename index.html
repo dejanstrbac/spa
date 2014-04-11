@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>spa.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>spa.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>Spa.js is a simple single page app micro-framework. Its purpose is to organize
+your code into a MVC-like pattern, allowing you to work with paths, controllers,
+actions and callbacks in javascript. It does not depend on other libraries and has
+been production test for IE6+ browsers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+<span class="hljs-comment">/*
+ *             mm###########mmm
+ *          m####################m
+ *        m#####`"#m m###"""'######m
+ *       ######*"  "   "   "mm#######
+ *     m####"  ,             m"#######m    Spa.js Micro-Framework
+ *    m#### m*" ,'  ;     ,   "########m   MIT License
+ *    ####### m*   m  |#m  ;  m ########   Copyright (c) 2014 Dejan Strbac
+ *   |######### mm#  |####  #m##########|  https://github.com/dejanstrbac/spa
+ *    ###########|  |######m############
+ *    "##########|  |##################"
+ *     "#########  |## /##############"
+ *       ########|  # |/ m###########
+ *        "#######      ###########"
+ *          """"""       """""""""
+ */</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>To run a new Spa app, embedd this script first. You are then ready to go by running
+<code>var spaApp = Spa();</code>. You can specify all app dependencies as arguments as you
+will see further in the code. Note that there can be only one spa app running at a time.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> Spa = Spa || <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(options)</span> {</span>
+<span class="hljs-pi">  'use strict'</span>;
+   <span class="hljs-keyword">var</span>  SPA_VERSION = <span class="hljs-number">3.20</span>,
+
+        initOptions = (<span class="hljs-keyword">typeof</span> options === <span class="hljs-string">'undefined'</span>) ? {} : options,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>In the app routes, if there is no action defined, this one will be
+assumed. This makes sense when there is a single action controller.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        DEFAULT_ACTION_NAME = <span class="hljs-string">'handler'</span>,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Start by memoizing the container element, as we will often require it.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        containerElement = document.getElementById(initOptions.containerId) ||
+                           document.createElement(<span class="hljs-string">'DIV'</span>),
+        containerWrapElement,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Request and response objects are kept even after the request has been
+completed so that context can be kept for the next request. Requests
+form a linked list, making whole history avaialable within request.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        request,
+        response,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Previous app state is saved given in the request to the controller as
+aid for context determination. In most cases it is not needed or used,
+but could be helpful for having a section of e.g. last seen pages.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        previousPath,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>When hash listeners are not supported in older browsers, we will poll
+for hash changes every <code>200</code> milliseconds.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        pollingInterval = initOptions.pollingInterval || <span class="hljs-number">200</span>,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>The SPA app logic is contained in the following objects. Contents
+are injected via public interfaces.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        routes      = initOptions.routes      || [],
+        controllers = initOptions.controllers || {},
+        callbacks   = initOptions.callbacks   || {},</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>Memo storages for aiding memoization in helpers, controllers, views…
+We separate internal from the ones exposed in the public interface.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        internalObjectsMemo = {},
+        publicObjectsMemo   = {},</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>SPA includes a basic template renderer, but it is recommended to
+override it with something more powerful like Mustache templating.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        customTemplateEngine = initOptions.templateEngine,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>There is quite a lot of stuff happening within SPA, although all
+fairly simple. Having some logging in development mode might be helpful.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        debugging = initOptions.debug || <span class="hljs-literal">false</span>,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>Indicator whether application is running or not, so we can prevent
+multiple initializations.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        isRunning,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>The $ is a utility object and keeps non SPA releted methods, for DOM,
+object and events handling. It has been encapsulated on its own so it
+mat be extracted.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        $ = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>Executing the specified method on each element of the array. Does
+not modify the array on its own. Defined for more readable loops.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">var</span> arrayEach = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(array, method)</span> {</span>
+                <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>, l = array.length; i &lt; l; i += <span class="hljs-number">1</span>) {
+                  method(array[i], i);
+                }
+              },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>Extend a function with another one, by wrapping into a new function,
+which executes the new one and then the old one. If the new function
+returns false, the chaining will be stopped, and older function will
+not be executed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              extendFunc = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(oldFunc, newFunc)</span> {</span>
+                <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+                  <span class="hljs-keyword">var</span> rValue = newFunc.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
+                  <span class="hljs-keyword">if</span> (rValue !== <span class="hljs-literal">false</span>) {
+                    rValue = rValue || oldFunc.apply(<span class="hljs-keyword">this</span>, <span class="hljs-built_in">arguments</span>);
+                  }
+                  <span class="hljs-keyword">return</span> rValue;
+                };
+              },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>Non-destructive method overriding, used for extending callbacks, helpers
+and controller objects. The methods are chained, the new one taking place
+before the old one.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              extendMethods = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(oldMethods, newMethods)</span> {</span>
+                <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> m <span class="hljs-keyword">in</span> newMethods) {
+                  <span class="hljs-keyword">if</span> (newMethods.hasOwnProperty(m)) {
+                    <span class="hljs-keyword">if</span> (oldMethods.hasOwnProperty(m)) {
+                      oldMethods[m] = extendFunc(oldMethods[m], newMethods[m]);
+                    } <span class="hljs-keyword">else</span> {
+                      oldMethods[m] = newMethods[m];
+                    }
+                  }
+                }
+              },
+
+              addEventListener = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(el, eventName, handler)</span> {</span>
+                <span class="hljs-keyword">if</span> (el.addEventListener) {
+                  el.addEventListener(eventName, handler);
+                } <span class="hljs-keyword">else</span> {
+                  el.attachEvent(<span class="hljs-string">'on'</span> + eventName, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span> handler.call(el); });
+                }
+              },
+
+              onDocumentReady = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(fn)</span> {</span>
+                <span class="hljs-keyword">if</span> (document.addEventListener) {
+                  document.addEventListener(<span class="hljs-string">'DOMContentLoaded'</span>, fn);
+                } <span class="hljs-keyword">else</span> {
+                  document.attachEvent(<span class="hljs-string">'onreadystatechange'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+                    <span class="hljs-keyword">if</span> (document.readyState === <span class="hljs-string">'interactive'</span>) { fn(); }
+                  });
+                }
+              },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>Not all browsers support the <code>onhashchange</code> event. We must check,
+and if not supported fallback to the alternative solution of polling.
+The following check is taken from Modernizr.js: documentMode logic
+from YUI to filter out IE8 Compatibility Mode which gives false positives.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              hashChangeSupported = (<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+                <span class="hljs-keyword">return</span> (<span class="hljs-string">'onhashchange'</span> <span class="hljs-keyword">in</span> window) &amp;&amp;
+                  (document.documentMode === <span class="hljs-literal">undefined</span> || document.documentMode &gt; <span class="hljs-number">7</span>);
+              })(),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>Method to extract hash paths from the url. IE returns “#” when there
+is nothing in front of the hash, while other browsers return null
+in this situation.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              getLocationHash = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+                <span class="hljs-keyword">return</span> (window.location.hash &amp;&amp; (window.location.hash !== <span class="hljs-string">'#'</span>)) ? window.location.hash : <span class="hljs-string">'#!/'</span>;
+              },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>Simple dummy renderer. It can be redefined by calling
+<code>setRenderer</code> which will override this method. If there is a problem,
+it should return either <code>null</code> or <code>false</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              interpolate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str, data)</span> {</span>
+                <span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> p <span class="hljs-keyword">in</span> data) {
+                  <span class="hljs-keyword">if</span> (data.hasOwnProperty(p)) {
+                    str = str.replace(<span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(<span class="hljs-string">'{{'</span>+p+<span class="hljs-string">'}}'</span>,<span class="hljs-string">'g'</span>), data[p]);
+                  }
+                }
+                <span class="hljs-keyword">return</span> str;
+              },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>Simple conditional internal logging method to analyze the flow
+throughout the spa application.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              debugLog = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(msgTemplate, msgData)</span> {</span>
+                <span class="hljs-keyword">if</span> ((<span class="hljs-keyword">typeof</span> console !== <span class="hljs-string">'undefined'</span>) &amp;&amp; console.log) {
+                  console.log(interpolate(msgTemplate, msgData));
+                }
+              };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>Public methods of $ utility object</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> {
+              each                : arrayEach,
+              extendMethods       : extendMethods,
+              addEventListener    : addEventListener,
+              onDocumentReady     : onDocumentReady,
+              debugLog            : debugLog,
+              hashChangeSupported : hashChangeSupported,
+              getLocationHash     : getLocationHash,
+              interpolate         : interpolate
+            };
+        }(),
+
+        log = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(message)</span> {</span>
+          <span class="hljs-keyword">if</span> (debugging) {
+            $.debugLog(<span class="hljs-string">'Spa: {{debugMessage}}'</span>, { debugMessage: message});
+          }
+        },
+
+        memoEngine = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(memoStorage)</span> {</span>
+          <span class="hljs-keyword">var</span> memoWrapper = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bucket, key, getterFunc, useMemo, conditionalFunc)</span> {</span>
+                <span class="hljs-keyword">var</span> getterFuncResult;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>Initialize the memoStorage if needed</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">if</span> (!memoStorage) { memoStorage = {}; }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p>If <code>useMemo</code> is not passed, we will still assume memoization.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> useMemo === <span class="hljs-string">'undefined'</span>) { useMemo = <span class="hljs-literal">true</span>; }
+
+                <span class="hljs-keyword">if</span> (useMemo) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>If the given key is an Array, casting to string will join its
+elements (e.g.) <code>[1,2]</code> into <code>&quot;1,2&quot;</code> which is again sufficient.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  key = key.toString();</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p>Buckets are canonical names used to separate namespaces for key/values.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  bucket = bucket.toString();
+                  <span class="hljs-keyword">if</span> (!memoStorage.hasOwnProperty(bucket)) {
+                    memoStorage[bucket] = {};
+                  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>Simply check if the memo key is defined on the bucket.
+Set it if it does not, otherwise just return it.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  <span class="hljs-keyword">if</span> (!memoStorage[bucket].hasOwnProperty(key)) {
+                    log(<span class="hljs-string">'memo miss: '</span> + bucket + <span class="hljs-string">'['</span> + key + <span class="hljs-string">']'</span>);
+                    <span class="hljs-keyword">if</span> (getterFunc) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>In case the passed getter is not calleable, just use its value.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                      <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> getterFunc === <span class="hljs-string">'function'</span>) {
+                        getterFuncResult = getterFunc(key);
+                      } <span class="hljs-keyword">else</span> {
+                        getterFuncResult = getterFunc;
+                      }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>If a <code>conditionalFunc</code> function is passed, the response from
+the <code>getterFunc</code> is passed through it to determine whether
+memoization should happen or not. The <code>conditionalFunc</code> should
+return a boolean value.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                      <span class="hljs-keyword">if</span> ((<span class="hljs-keyword">typeof</span> conditionalFunc === <span class="hljs-string">'undefined'</span>) ||
+                          (conditionalFunc &amp;&amp; conditionalFunc(getterFuncResult))) {
+                        log(<span class="hljs-string">'memo write: '</span> + bucket + <span class="hljs-string">'['</span> + key + <span class="hljs-string">']'</span>);
+                        memoStorage[bucket][key] = getterFuncResult;
+                      }
+                      <span class="hljs-keyword">return</span> getterFuncResult;
+                    }
+                  } <span class="hljs-keyword">else</span> {
+                    log(<span class="hljs-string">'memo hit: '</span> + bucket + <span class="hljs-string">'['</span> + key + <span class="hljs-string">']'</span>);
+                    <span class="hljs-keyword">return</span> memoStorage[bucket][key];
+                  }
+                } <span class="hljs-keyword">else</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>Memoization is being skipped. If there was an existing memorized
+value it should be invalidated/removed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  <span class="hljs-keyword">if</span> (memoStorage.hasOwnProperty(bucket) &amp;&amp;
+                        memoStorage[bucket].hasOwnProperty(key)) {
+                    <span class="hljs-keyword">delete</span> memoStorage[bucket][key];
+                  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>If <code>getterFunc</code> is <code>null</code>, the call is made just for deleting the
+memoized version, hence clearing the cache.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  <span class="hljs-keyword">if</span> (getterFunc) { <span class="hljs-keyword">return</span> getterFunc(key); }
+                }
+              },
+
+              memoExists = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(bucket, key)</span> {</span>
+                <span class="hljs-keyword">return</span> memoStorage.hasOwnProperty(bucket) &amp;&amp;
+                         memoStorage[bucket].hasOwnProperty(key);
+              };
+
+          <span class="hljs-keyword">return</span> {
+            memoize: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(bucket, key, getterFunc, useMemo, conditionalFunc)</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <p>SPA framework uses extensively memoization (caching) internally, as
+in catalog-like web apps the likelyhood to browse back to a page is
+very high. the same mechanisms are opened for app use, by making this
+method public in the return object below.</p>
+<p>The <code>bucket</code> argument is used for namespace of keys and semantical
+separation in the memory object. Mandatory along with <code>key</code>.</p>
+<p>The optional <code>getterFunc</code> argument can be exempt in case we just want
+to extract an existing memoized value.</p>
+<p>The optional <code>useMemo</code> argument is a boolean value which defaults to
+<code>true</code>, used to circumvent the memoization algorithm, and delete
+previously memoized value.</p>
+<p>The optional argument <code>conditionalFunc</code> is a conditional function
+which will accept the resulting value of the <code>getterFunc</code> as function
+argument. If <code>conditionalFunc</code> is passed and it returns <code>true</code>
+the returned <code>getterFunc</code> value will be memoized, otherwise the
+memoization will be circumvented.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              <span class="hljs-keyword">return</span> memoWrapper(bucket, key, getterFunc, useMemo, conditionalFunc);
+            },
+
+            isMemoized: <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(bucket, key)</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <p>Simple check whether an object is already memoized - present in the cache</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              <span class="hljs-keyword">return</span> memoExists(bucket, key);
+            }
+          };
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>We need a simple way of redirecting, by default to SPA hash bang
+paths, buy also possibly with a different url method. This can for
+instance be used in the response from the controller, by returning
+a redirect option (see below).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        redirectToPath = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(destinationHashPath, url)</span> {</span>
+          <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> url === <span class="hljs-string">'undefined'</span>) {
+            log(<span class="hljs-string">'redirected to: '</span> + destinationHashPath);
+            window.location.hash = <span class="hljs-string">'#!'</span> + destinationHashPath;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>Previous path must be cleared otherwise router may not recognize
+the change if the path is the same as the new one.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            previousPath = <span class="hljs-literal">null</span>;
+          } <span class="hljs-keyword">else</span> {
+            window.location = url + (destinationHashPath || <span class="hljs-string">''</span>);
+          }
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>Parsing of the the current location hash and splitting it in
+REST-like parameters which are returned.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        getParams = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(str)</span> {</span>
+          <span class="hljs-keyword">var</span> qs     = str || window.location.hash,
+              params = {},
+              qsArray,
+              pair;
+          <span class="hljs-keyword">if</span> (qs.match(<span class="hljs-regexp">/^\#\!/</span>)) {
+            qsArray = qs.substr(<span class="hljs-number">3</span>).split(<span class="hljs-string">'/'</span>);
+            <span class="hljs-keyword">while</span> (qsArray.length !== <span class="hljs-number">0</span>) {
+              pair = qsArray.splice(<span class="hljs-number">0</span>, <span class="hljs-number">2</span>);
+              params[pair[<span class="hljs-number">0</span>]] = pair[<span class="hljs-number">1</span>];
+            }
+          }
+          <span class="hljs-keyword">return</span> params;
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <p>Finding out the current route based on the information passed into
+the hash, and returning the route entry with all its content back.
+SPA routes start with <code>#!</code> - (hash bang).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        getRouteFor = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(path)</span> {</span>
+          <span class="hljs-keyword">var</span> currentRoute, i, l;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-37">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-37">&#182;</a>
+              </div>
+              <p>We will first try matching the <code>root route</code>, as with highest priority.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">if</span> (path.match(<span class="hljs-regexp">/^$|^#(?!\!).+/</span>)) {
+            currentRoute = routes.slice(-<span class="hljs-number">1</span>)[<span class="hljs-number">0</span>];
+          } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (path.match(<span class="hljs-regexp">/^\#\!.+/</span>)) {
+            <span class="hljs-keyword">for</span> (i=<span class="hljs-number">0</span>, l=routes.length; (i &lt; l) &amp;&amp; !currentRoute; i+=<span class="hljs-number">1</span>) {
+              <span class="hljs-keyword">if</span> (<span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(routes[i].url).test(path.slice(<span class="hljs-number">2</span>))) {
+                currentRoute = routes[i];
+              }
+            }
+          }
+          <span class="hljs-keyword">return</span> currentRoute;
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <p>Based on the passed request, respective controller action is called
+and its contents get memoized. A conditional function is passed to
+determine whether the response should be memoized or not.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        getControllerActionResponseFor = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(request)</span> {</span>
+          <span class="hljs-keyword">return</span> $cache.memoize(<span class="hljs-string">'spa__responses'</span>, request.path, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+            <span class="hljs-keyword">return</span> (controllers[request.controller][request.action])(request);
+          }, <span class="hljs-literal">true</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(response)</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <p>The conditional memoization function allows the response to determine
+on its own whether it will be memoized or not.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> response &amp;&amp; response.hasOwnProperty(<span class="hljs-string">'options'</span>) &amp;&amp; !!response.options.cache;
+          });
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
+              </div>
+              <p>There are callbacks defined in multiple places in the router,
+such as <code>beforeRender</code>, <code>afterRender</code> etc. The logic is the same,
+so this method has been extracted out and generalized. There are
+two levels of callbacks, one on the app level, which will run for
+every controller, and there are callbacks on the controller level.</p>
+<p>Controller callbacks have higher priority than the app ones as they
+carry more relevant logic.</p>
+<p>Note that response may be ommited in some cases such as <code>beforeFilter</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        runCallbacks = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(callbackName, request, response)</span> {</span>
+          <span class="hljs-keyword">var</span> controllerCallback = controllers[request.controller][callbackName],
+              globalCallback     = callbacks[callbackName];
+          <span class="hljs-keyword">if</span> (controllerCallback) {
+            log(<span class="hljs-string">'callback: '</span> + request.controller + <span class="hljs-string">'.'</span> + callbackName + <span class="hljs-string">'()'</span>);
+            setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span> controllerCallback.call(<span class="hljs-literal">null</span>, request, response); }, <span class="hljs-number">5</span>);
+          }
+          <span class="hljs-keyword">if</span> (callbacks[callbackName]) {
+            log(<span class="hljs-string">'callback: '</span> + callbackName + <span class="hljs-string">'()'</span>);
+            setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span> globalCallback.call(<span class="hljs-literal">null</span>, request, response); }, <span class="hljs-number">5</span>);
+          }
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <p>Based on request and response, this method will determine which
+is the right template to render. It returns template name.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        getTemplateNameFor = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(request, response)</span> {</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-42">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-42">&#182;</a>
+              </div>
+              <p>Assume the controller name for the template and using single action
+controllers called <code>handler</code> as defined in <code>DEFAULT_ACTION_NAME</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">var</span> templateName = request.controller;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              <p>The controller can pass a name of the template to render
+in the options part of the response. Otherwise it can be
+assumed by the action name.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">if</span> (response.options &amp;&amp; response.options.hasOwnProperty(<span class="hljs-string">'templateName'</span>)) {
+            templateName = response.options.templateName;
+          } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (request.action) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-44">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-44">&#182;</a>
+              </div>
+              <p>If action is passed, we will assume that action name
+as template definition.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            templateName += <span class="hljs-string">'__'</span> + request.action;
+          }
+          <span class="hljs-keyword">return</span> templateName;
+        },
+
+        getRemoteTemplate = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(templateName, successHandler)</span> {</span>
+          <span class="hljs-keyword">var</span> request = <span class="hljs-keyword">new</span> XMLHttpRequest();
+          log(<span class="hljs-string">'remote template requested: '</span> + templateName + <span class="hljs-string">'.spa.html'</span>);
+          request.open(<span class="hljs-string">'GET'</span>, templateName + <span class="hljs-string">'.spa.html'</span>, <span class="hljs-literal">true</span>);
+          request.onreadystatechange = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+            <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.readyState === <span class="hljs-number">4</span>){
+              <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.status &gt;= <span class="hljs-number">200</span> &amp;&amp; <span class="hljs-keyword">this</span>.status &lt; <span class="hljs-number">400</span>) {
+                <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> successHandler !== <span class="hljs-string">'undefined'</span>) {
+                  successHandler(templateName, <span class="hljs-keyword">this</span>.responseText);
+                  log(<span class="hljs-string">'remote template retrieved: '</span> + templateName + <span class="hljs-string">'.spa.html'</span>);
+                }
+              } <span class="hljs-keyword">else</span> {
+                <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'remote template not found &gt;&gt; '</span> + templateName);
+              }
+            }
+          };
+          request.send();
+          request = <span class="hljs-literal">null</span>;
+        },
+
+        compileTemplate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(template, data)</span> {</span>
+          <span class="hljs-keyword">var</span> compiledTemplate;
+          <span class="hljs-keyword">if</span> (customTemplateEngine) {
+            compiledTemplate = customTemplateEngine(template, data);
+          } <span class="hljs-keyword">else</span> {
+            compiledTemplate = $.interpolate(template, data);
+          }
+          <span class="hljs-keyword">if</span> (!compiledTemplate) { <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'template error &gt;&gt; '</span> + response.options.template); }
+          <span class="hljs-keyword">return</span> compiledTemplate;
+        },
+
+        replaceContainerContents = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(newContents)</span> {</span>
+          <span class="hljs-keyword">if</span> (containerWrapElement) {
+            containerElement.removeChild(containerWrapElement);
+          }
+          containerWrapElement = document.createElement(<span class="hljs-string">'DIV'</span>);
+          containerWrapElement.innerHTML = newContents;
+          containerElement.appendChild(containerWrapElement);
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-45">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-45">&#182;</a>
+              </div>
+              <p>Rendering, wrapping and setting of the template into the defined
+application container. Wrapping is done so that the effort of
+insertion as well deletion is minimal on the DOM. At the same time,
+removal is done before setting so that the possible events are
+cleared, hopefully preventing memory leaks.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        renderResponse = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(response)</span> {</span>
+          <span class="hljs-keyword">var</span> template = $cache.memoize(<span class="hljs-string">'spa__templates'</span>, response.options.template),
+              renderedView,
+              cacheKey;
+          response.data    = response.data    || {};
+          response.options = response.options || {};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-46">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <p>The cache key is the template name for nonmutating views, where the
+attribute cache is just set to boolean true. To cache same views but for
+different data, the attribute cache needs to be set to some data
+that will uniquely identify it - e.g. id of a product.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>          <span class="hljs-keyword">if</span> (!template) {
+            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'template not found &gt;&gt; '</span> + response.options.template);
+          }
+          <span class="hljs-keyword">if</span> (response.options.cache) {
+            cacheKey = response.options.template;
+            <span class="hljs-keyword">if</span> (response.options.cache !== <span class="hljs-literal">true</span>) {
+              cacheKey += <span class="hljs-string">'-'</span> + response.options.cache;
+            }
+            renderedView = $cache.memoize(<span class="hljs-string">'spa__views'</span>, cacheKey, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+              <span class="hljs-keyword">return</span> compileTemplate(template, response.data);
+            });
+          } <span class="hljs-keyword">else</span> {
+            renderedView = compileTemplate(template, response.data);
+          }
+          replaceContainerContents(renderedView);
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-47">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-47">&#182;</a>
+              </div>
+              <p>The router is invoked on every hash change. The route is parsed and
+compared to predefined routes. Matching controller/action is then
+called and passed parameters found in the hash.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        router = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+          <span class="hljs-keyword">var</span> currentPath    = $.getLocationHash(),
+              pollingAllowed = <span class="hljs-literal">true</span>,
+              matchedRouteEntry;
+
+          <span class="hljs-keyword">if</span> (pollingAllowed &amp;&amp; (currentPath !== previousPath)) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-48">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-48">&#182;</a>
+              </div>
+              <p>In case of older browsers (IE6/7), where we use hash polling instead
+of hash change events, polling needs to be terminated when we are
+still on the same page, so unneccessary continous calls to the same
+controller/action &amp; re-renderring is avoided.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            pollingAllowed = <span class="hljs-literal">false</span>;
+            matchedRouteEntry = getRouteFor(currentPath);
+            <span class="hljs-keyword">if</span> (!matchedRouteEntry) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-49">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-49">&#182;</a>
+              </div>
+              <p>The route has not been recognized and we need to simulate a
+404 response. The 404 template can be defined just as any other.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              renderResponse({ options : { template: <span class="hljs-string">'404'</span>, cache: <span class="hljs-literal">true</span> } });
+            } <span class="hljs-keyword">else</span> {
+              log(<span class="hljs-string">'---'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-50">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-50">&#182;</a>
+              </div>
+              <p>Callback beforeUnload runs before a change of page is made. This
+is a useful callback in case where events attached in afterRender callback
+need to be detached from the DOM elements, before they get destroyed.
+Obviously, this callback will not run on the inital loading of the app.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              <span class="hljs-keyword">if</span> (request) {
+                runCallbacks(<span class="hljs-string">'beforeUnload'</span>, request, response);
+              }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-51">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-51">&#182;</a>
+              </div>
+              <p>The request object is a linked list with all previous requests. Each node
+contains the path, path-derived parameters and controller/action information.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              request = {
+                path       : currentPath,
+                params     : getParams(currentPath),
+                controller : matchedRouteEntry.controller,
+                action     : matchedRouteEntry.action || DEFAULT_ACTION_NAME,
+                previous   : request
+              };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-52">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-52">&#182;</a>
+              </div>
+              <p>Run the <code>beforeFilter</code> callbacks defined in controller and on top
+level. Note that the response doesn’t exist yet so it is not passed here.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              runCallbacks(<span class="hljs-string">'beforeFilter'</span>, request);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-53">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-53">&#182;</a>
+              </div>
+              <p>Fetch the response by calling the respective route’s defined
+controller and action and passing the request object formed before.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              response = getControllerActionResponseFor(request);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-54">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-54">&#182;</a>
+              </div>
+              <p>The <code>afterFilter</code> callback might be useful, if we are not concerned
+whether the controller action responded at all, but still need
+to do after controller processing.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              runCallbacks(<span class="hljs-string">'afterFilter'</span>, request, response);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-55">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-55">&#182;</a>
+              </div>
+              <p>If the controller action responed to hash parameters with data,
+we can proceed to callbacks and rendering.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              <span class="hljs-keyword">if</span> (response) {
+                response.options = response.options || {};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-56">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-56">&#182;</a>
+              </div>
+              <p>Some controller actions have no need of a rendered response.
+Those can be popups for instance, triggered by hash changes.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">if</span> (response.options.renderNothing) {
+                  log(<span class="hljs-string">'template bypassed'</span>);
+                } <span class="hljs-keyword">else</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-57">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-57">&#182;</a>
+              </div>
+              <p>The <code>beforeRender</code> callback might be useful for cleaning up the
+previous view or detaching some events.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  runCallbacks(<span class="hljs-string">'beforeRender'</span>, request, response);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-58">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-58">&#182;</a>
+              </div>
+              <p>Response object should give information which template was used.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  response.options.template = getTemplateNameFor(request, response);
+
+                  <span class="hljs-keyword">if</span> (response.options.remoteTemplate &amp;&amp;
+                      !$cache.isMemoized(<span class="hljs-string">'spa__templates'</span>, response.options.templateName)) {
+                    getRemoteTemplate(response.options.templateName, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(templateName, data)</span> {</span>
+                      $cache.memoize(<span class="hljs-string">'spa__templates'</span>, templateName, data);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-59">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-59">&#182;</a>
+              </div>
+              <p>Remotely fetched template is memoized and only on success can be rendered.
+The data and options given from the action are passed into. The rendered
+template replaces current contents of the app container with the success
+callback, not before.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                      renderResponse(response);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-60">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-60">&#182;</a>
+              </div>
+              <p>The <code>afterRender</code> callback runs also with the success callback of the remotely
+fetched template. It is usually the place where DOM events should be attached
+to the newly rendered html.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                      runCallbacks(<span class="hljs-string">'afterRender'</span>, request, response);
+                    });
+                  } <span class="hljs-keyword">else</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-61">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-61">&#182;</a>
+              </div>
+              <p>Finally the template is rendered and the data and options given
+from the action are passed into. The rendered template immediately
+replaces current contents of the app container.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    renderResponse(response);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-62">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-62">&#182;</a>
+              </div>
+              <p>The <code>afterRender</code> callback is usually the place where DOM events
+should be attached to the newly rendered html.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    runCallbacks(<span class="hljs-string">'afterRender'</span>, request, response);
+                  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-63">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-63">&#182;</a>
+              </div>
+              <p>We must ensure we are scrolling to the page top,
+to simulate a well known page load behaviour</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                  setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span> window.scrollTo(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>); }, <span class="hljs-number">0</span>);
+                }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-64">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-64">&#182;</a>
+              </div>
+              <p>The response returned can ask for the app to redirect the page,
+most likely to another SPA hash bang path, but also to another url
+via the returned <code>redirectTo</code> property.</p>
+<p>Since this executes late, after rendering, it can be combined
+with the <code>renderNothing</code> option to avoid any rendering before redirecting.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">if</span> (response.options.redirectTo) {
+                  redirectToPath(response.options.redirectTo);
+                }
+              } <span class="hljs-keyword">else</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-65">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-65">&#182;</a>
+              </div>
+              <p>The route has been recognized, but the controller returned an
+empty response probably the object does not exist in the
+payload (like wrong id).</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                renderResponse({ options : { template: <span class="hljs-string">'404'</span>, cache: <span class="hljs-literal">true</span> } });
+              }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-66">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-66">&#182;</a>
+              </div>
+              <p>Previous hash and exploded params out of it are kept
+so they can be given in the next request’s hash, as a
+context aid.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              previousPath   = currentPath;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-67">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-67">&#182;</a>
+              </div>
+              <p>The handler of the route is finishing and polling is allowed
+again - influences only older browsers.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>              pollingAllowed = <span class="hljs-literal">true</span>;
+            }
+          }
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-68">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-68">&#182;</a>
+              </div>
+              <p>Initialize the internal memoizing engine.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        $cache = memoEngine(internalObjectsMemo),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-69">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-69">&#182;</a>
+              </div>
+              <p>Initialize and start the application. Obviously, since we here query
+the DOM, it should have been loaded first. This method should only be
+run through the Spa public interface.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        runApplication = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> {</span>
+          <span class="hljs-keyword">var</span> templateElements = document.querySelectorAll(<span class="hljs-string">"script[type='text/html']"</span>);
+          <span class="hljs-keyword">if</span> (!isRunning) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-70">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-70">&#182;</a>
+              </div>
+              <p>Ensure there is a container of jQuery object / DOM element
+to work with as a SPA. The rendering of pages will happen there.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">if</span> (!containerElement) {
+              <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'container does not exist'</span>);
+            }
+            document.body.appendChild(containerElement);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-71">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-71">&#182;</a>
+              </div>
+              <p>Views templates are fetched at initialization time and memoized as
+they will be often called, so no repetitive DOM access is needed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            $.each(templateElements, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(templateEl)</span> {</span>
+              <span class="hljs-keyword">var</span> templateName = templateEl.id;
+              <span class="hljs-keyword">if</span> (templateName.substr(<span class="hljs-number">0</span>,<span class="hljs-number">5</span>) === <span class="hljs-string">'spa__'</span>) {
+                templateName = templateName.substring(<span class="hljs-number">5</span>);
+                $cache.memoize(<span class="hljs-string">'spa__templates'</span>, templateName, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+                  <span class="hljs-keyword">return</span> templateEl.innerHTML;
+                });
+              }
+            });
+
+            isRunning = <span class="hljs-literal">true</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-72">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-72">&#182;</a>
+              </div>
+              <p>Starts the SPA app router, not forgetting to process the current
+hash path, so the SPA app jumps to the desired state - as in the
+case of copy/pasting a whole url.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            router();
+            <span class="hljs-keyword">if</span> ($.hashChangeSupported) {
+              $.addEventListener(window, <span class="hljs-string">'hashchange'</span>, router);
+            } <span class="hljs-keyword">else</span> {
+              setInterval(router, pollingInterval);
+            }
+          }
+        };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-73">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-73">&#182;</a>
+              </div>
+              <p>Expose public interfaces to the SPA object, so controllers/actions
+and routes can be injected.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">return</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-74">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-74">&#182;</a>
+              </div>
+              <p>The helpers object exposes some of the internals which might be found
+useful in the application, like templates, redirects and memoization.
+It is recommended to extend this object with own methods via
+the <code>addHelpers</code> defined below, so everything related to this SPA app
+is kept in one object and place.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      helpers: {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-75">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-75">&#182;</a>
+              </div>
+              <p>If we need to use the template which was collected by SPA, its
+contents can be retrieved with this method.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        getTemplate: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(templateName)</span> {</span>
+          <span class="hljs-keyword">return</span> $cache.memoize(<span class="hljs-string">'spa__templates'</span>, templateName);
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-76">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-76">&#182;</a>
+              </div>
+              <p>Simple redirecting method, supporting both urls and hash bang paths,
+used internally for redirecting within controllers’ response.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        redirectTo: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(destinationHashPath, url)</span> {</span>
+          <span class="hljs-keyword">return</span> redirectToPath(destinationHashPath, url);
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-77">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-77">&#182;</a>
+              </div>
+              <p>The renderer can be called directly if needed for manual partials
+renderings. The renderer will be either the default one (built-in),
+or the one set through the <code>setRenderer</code> method below.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        render: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(template, data)</span> {</span>
+          <span class="hljs-keyword">return</span> compileTemplate(template, data);
+        },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-78">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-78">&#182;</a>
+              </div>
+              <p>Initialize the public caching mechanism.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        cache: memoEngine(publicObjectsMemo)
+      },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-79">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-79">&#182;</a>
+              </div>
+              <p>This method will selectively turn debug logging on or off at runtime.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      setDebug: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(value)</span> {</span>
+        <span class="hljs-keyword">if</span> (value !== <span class="hljs-string">'undefined'</span>) { debugging = value; }
+        log(<span class="hljs-string">'SPA (Single Page App) v'</span> + SPA_VERSION);
+        log(<span class="hljs-string">'https://github.com/dejanstrbac/spa'</span>);
+        log(<span class="hljs-string">'~~~~ ~~~ ~~~ ~~~ ~~~ ~~~~ ~~~~ ~~~'</span>);
+        log(<span class="hljs-string">'Debug mode enabled'</span>);
+      },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-80">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-80">&#182;</a>
+              </div>
+              <p>If the default renderer (templating engine) won’t do, a new one
+can be set via this method. The signiture is function(template, data),
+where template is a <code>text/html</code> file and data is of JSON format.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      setTemplateEngine: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(newEngine)</span> {</span>
+        customTemplateEngine = newEngine;
+      },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-81">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-81">&#182;</a>
+              </div>
+              <p>With this method we can extend in bulk the helpers object below.
+Adding single methods is also easy by directly defining them on
+the <code>spaApp.helpers</code>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      addHelpers: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(newHelpers)</span> {</span>
+        $.extendMethods(<span class="hljs-keyword">this</span>.helpers, newHelpers);
+      },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-82">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-82">&#182;</a>
+              </div>
+              <p>Controllers hold the main app logic/actions and are injected here,
+by extending the private object <code>controllers</code>. The argument
+<code>newControllers</code> is expected to be an object whose properties are
+controllers of own properties which are actions.</p>
+<p>Properties with the following names <code>beforeRender</code>, <code>afterRender</code>,
+<code>beforeFilter</code> &amp; <code>afterFilter</code> define controller callbacks. To selectively
+execute code in the callback for specific action, you can switch over
+the property <code>action</code> of the request argument, containing the name
+of the routed controller action.</p>
+<p>Successive calls to this method will extend already degined methods.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      addControllers: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(newControllers)</span> {</span>
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> c <span class="hljs-keyword">in</span> newControllers) {
+          <span class="hljs-keyword">if</span> (newControllers.hasOwnProperty(c)) {
+            controllers[c] = controllers[c] || {};
+            $.extendMethods(controllers[c], newControllers[c]);
+          }
+        }
+      },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-83">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-83">&#182;</a>
+              </div>
+              <p>Callbacks are methods which need to run after specific events in the code.
+While controllers can defined own callback which are of higher priority,
+here app level callbacks can be attached.</p>
+<p>The argument <code>newCallback</code> is  expected to be an object whose properties are
+callbacks with possible names <code>beforeRender</code>, <code>afterRender</code>, <code>beforeFilter</code>
+&amp; <code>afterFilter</code> define callbacks. To selectively execute a callback for
+specific action, we can switch over the name of the action present in
+the request argument passed to the callback. All callbacks accept two arguments
+<code>request</code> and <code>response</code>, except <code>beforeFilter</code> which accepts only <code>request</code>
+as it executes before the controller action.</p>
+<p>Mutliple calls to this method for same callbacks are extending those callbacks
+instead of overwriting them.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      addCallbacks: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(newCallbacks)</span> {</span>
+        $.extendMethods(callbacks, newCallbacks);
+      },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-84">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-84">&#182;</a>
+              </div>
+              <p>Routes map url hash bang paths to controllers and their respective
+actions. First added routes have higher priority as they are matched
+via regular expressions. The argument <code>newRoutes</code> is expected to be an
+array of object paths.</p>
+<p>If action property is ommited above, the app will assume it’s called <code>handler</code>
+(from <code>DEFAULT_ACTION_NAME</code>). You can define as many routes as needed.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      addRoutes: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(newRoutes)</span> {</span>
+        routes = routes.concat(newRoutes);
+        <span class="hljs-keyword">return</span> routes;
+      },</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-85">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-85">&#182;</a>
+              </div>
+              <p>Public interface to actually run the app. Run in this method as the last
+one, to start the app.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      start: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> {</span>
+        $.onDocumentReady(runApplication);
+        <span class="hljs-keyword">return</span> isRunning;
+      }
+  };
+
+};</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
