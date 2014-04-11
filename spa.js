@@ -25,7 +25,7 @@
 // will see further in the code. Note that there can be only one spa app running at a time.
 var Spa = Spa || function(options) {
   'use strict';
-   var  SPA_VERSION = 3.20,
+   var  SPA_VERSION = 3.22,
 
         initOptions = (typeof options === 'undefined') ? {} : options,
 

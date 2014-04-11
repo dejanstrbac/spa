@@ -1,6 +1,8 @@
 *SPA* - micro-framework for single page apps
 --------------------------------------------
 
+Version: 3.22
+
 # Introduction
 SPA is a micro-framework that aids building client browsing-heavy (read-heavy) javascript apps, that have no need for continous communication with the server. Think of a catalogue. It expects that the server sends a single page with a JSON payload embedded into the page as a variable, from which it serves the site content:
 
@@ -157,6 +159,16 @@ In some cases your controller action might not need a view. To avoid rendering a
       }
     }
 
+### Remote Templates
+Maybe some templates are too big or rarely called upon to be included in the page. Such templates can be loaded Just-In-Time, by defining a `remoteTemplate` to true, and passing the name of path to `templateName`. Note that the same origin policy applies here, and the template must be on the same domain. The template will be automatically cached so the next time it is needed, no network request will be made.
+
+    return {
+      data: {},
+      options: {
+        remoteTemplate: true,
+        templateName: '/spa_templates/remote'
+      }
+    }
 
 ### Redirecting
 Sometimes you might want to redirect to another path, especially if you have actions which don't render anything as above. To do so, just add the `redirectTo` variable in the options object of the response, setting the destination path as value:
