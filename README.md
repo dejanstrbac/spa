@@ -1,8 +1,8 @@
-*SPA* - a simple, micro-framework for single page apps
-------------------------------------------------------
+*SPA* - micro-framework for single page apps
+--------------------------------------------
 
 # Introduction
-SPA is a micro-framework that aids building client browsing-heavy (read-heavy) javascript apps, that have no need for continous communication with the server. It expects that the server sends a single page with a JSON payload embedded into the page as a variable, from which it serves the site content:
+SPA is a micro-framework that aids building client browsing-heavy (read-heavy) javascript apps, that have no need for continous communication with the server. Think of a catalogue. It expects that the server sends a single page with a JSON payload embedded into the page as a variable, from which it serves the site content:
 
     var spaPayload = {
       products: [/* lots of data */]
