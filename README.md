@@ -58,7 +58,7 @@ SPA is currently used at:
 
 
 # Quickstart
-Include the spa.js library in your pages, after including all the dependencies (jQuery/Zepto/Underscore/Mustache etc.).
+Simply, include the spa.js library in your pages before using it.
 
     <script type="text/javascript" src="spa.js"></script>
 
