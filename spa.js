@@ -1,7 +1,7 @@
 // Spa.js is a simple single page app micro-framework. Its purpose is to organize
 // your code into a MVC-like pattern, allowing you to work with paths, controllers,
 // actions and callbacks in javascript. It does not depend on other libraries and has
-// been production test for IE6+ browsers.
+// been production tested for IE8+ browsers.
 
 /*
  *             mm###########mmm

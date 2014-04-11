@@ -34,6 +34,11 @@ Please note that SPA is not a replacement for [backbone.js](http://backbonejs.or
 ### Dependencies
 - None.
 
+### Browser support
+- Compatible with all modern desktop and mobile browsers.
+- Internet Explorer supported from version 8.
+
+
 
 ### Restrictions
 - SPA uses the location hash to identify and route actions. This means that you cannot have another javascript dependency (as in another javscript library) that uses the location hash. You could overcome this, but not without a 5 pound hammer, so I guess SPA is not for you.
