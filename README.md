@@ -46,7 +46,7 @@ Please note that SPA is not a replacement for [backbone.js](http://backbonejs.or
 
 
 ### Source Code
-The annotated source code is available at [http://dejanstrbac.github.com/spa](http://dejanstrbac.github.com/spa/docs/spa.js)
+The annotated source code is available at [http://dejanstrbac.github.io/spa/docs/spa](http://dejanstrbac.github.io/spa/docs/spa)
 
 Improvement suggestions are highly welcome.
 
